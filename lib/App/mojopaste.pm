@@ -14,11 +14,11 @@ Mojopaste is a pastebin application. There's about one million of these out
 there. But if you have the need to run something internally at work or you
 just fancy having your own pastebin, this is your application.
 
-=head2 Demo
+=head1 DEMO
 
-You can try mojopaste out here: L<http://p.thorsen.pm>.
+You can try mojopaste here: L<http://p.thorsen.pm>.
 
-=head2 Installation
+=head1 INSTALLATION
 
 Install system wide with cpanm:
 
@@ -29,7 +29,36 @@ Don't have cpanm installed?
   $ curl -L http://cpanmin.us | perl - --sudo App::mojopaste
   $ wget http://cpanmin.us -O - | perl - --sudo App::mojopaste
 
-=head2 Other pastebins
+=head1 SYNOPSIS
+
+=over 4
+
+=item * Simple single process daemon
+
+  $ mojopaste daemon --listen http://*:8080
+
+=item * Save paste to custom dir
+
+  $ PASTE_DIR=/path/to/paste/dir mojopaste daemon --listen http://*:8080
+
+=item * Using the UNIX optimized, preforking hypnotoad web server
+
+  $ MOJO_CONFIG=/path/to/mojopaste.conf hypnotoad $(which mojopaste)
+
+Example mojopaste.conf:
+
+  {
+    paste_dir => '/path/to/paste/dir',
+    hypnotoad => {
+      listen => ['http://*:8080'],
+    },
+  }
+
+Check out L<Mojo::Server::Hypnotoad> for more hypnotoad options.
+
+=back
+
+=head1 OTHER PASTEBINS
 
 =over 4
 
@@ -40,24 +69,6 @@ Don't have cpanm installed?
 =item * L<http://pastebin.com>
 
 =back
-
-=head1 SYNOPSIS
-
-  $ mojopaste
-  $ MOJO_CONFIG=/path/to/mojopaste.conf hypnotoad $(which mojopaste)
-  $ PASTE_DIR=/path/to/paste/dir mojopaste daemon --listen http://*:8080
-  $ morbo $(which mojopast) --listen http://*:8080
-
-=head2 Example mojopaste.conf
-
-  {
-    paste_dir => '/path/to/paste/dir',
-    hypnotoad => {
-      listen => ['http://*:8080'],
-    },
-  }
-
-=head1 DEMO
 
 =cut
 

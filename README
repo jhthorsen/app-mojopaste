@@ -1,24 +1,57 @@
 NAME
-    App::mojopaste - Placeholder for mojopaste
+    App::mojopaste - Pastebin application
 
 VERSION
     0.01
 
 DESCRIPTION
-    This module does nothing.
+    Mojopaste is a pastebin application. There's about one million of these
+    out there. But if you have the need to run something internally at work
+    or you just fancy having your own pastebin, this is your application.
+
+DEMO
+    You can try mojopaste here: <http://p.thorsen.pm>.
+
+INSTALLATION
+    Install system wide with cpanm:
+
+      $ cpanm --sudo App::mojopaste
+
+    Don't have cpanm installed?
+
+      $ curl -L http://cpanmin.us | perl - --sudo App::mojopaste
+      $ wget http://cpanmin.us -O - | perl - --sudo App::mojopaste
 
 SYNOPSIS
-      $ MOJO_CONFIG=/path/to/mojopaste.conf hypnotoad $(which mojopaste)
-      $ PASTE_DIR=/path/to/paste/dir mojopaste daemon --listen http://*:8080
-      $ morbo $(which mojopast) --listen http://*:8080
+    *   Simple single process daemon
 
-  Example mojopaste.conf
-      {
-        paste_dir => '/path/to/paste/dir',
-        hypnotoad => {
-          listen => ['http://*:8080'],
-        },
-      }
+          $ mojopaste daemon --listen http://*:8080
+
+    *   Save paste to custom dir
+
+          $ PASTE_DIR=/path/to/paste/dir mojopaste daemon --listen http://*:8080
+
+    *   Using the UNIX optimized, preforking hypnotoad web server
+
+          $ MOJO_CONFIG=/path/to/mojopaste.conf hypnotoad $(which mojopaste)
+
+        Example mojopaste.conf:
+
+          {
+            paste_dir => '/path/to/paste/dir',
+            hypnotoad => {
+              listen => ['http://*:8080'],
+            },
+          }
+
+        Check out Mojo::Server::Hypnotoad for more hypnotoad options.
+
+OTHER PASTEBINS
+    *   <http://paste.scsys.co.uk>
+
+    *   <http://paste.ubuntu.com>
+
+    *   <http://pastebin.com>
 
 AUTHOR
     Jan Henning Thorsen - "jhthorsen@cpan.org"
