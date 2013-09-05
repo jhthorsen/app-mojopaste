@@ -4,7 +4,7 @@ use Mojo::Util qw/ spurt slurp /;
 use File::Path ();
 
 plugin 'config' if $ENV{MOJO_CONFIG};
-my $paste_dir = app->config->{paste_dir} || $ENV{PASTE_DIR} || '/tmp/mojopaste';
+my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || '/tmp/mojopaste';
 -d $paste_dir or File::Path::mkpath($paste_dir) or die "mkpath $paste_dir: $!";
 
 get '/', { file => undef, paste_id => '' }, sub {
