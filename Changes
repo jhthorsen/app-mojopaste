@@ -1,5 +1,8 @@
 Revision history for App-mojopaste
 
+0.03     Thu Sep  5 16:54:59 2013
+       * Fix typo in PREREQ_PM
+
 0.02     Thu Sep  5 16:48:08 2013
        * Fix repository path
 
