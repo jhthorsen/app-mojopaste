@@ -1,5 +1,12 @@
 Revision history for App-mojopaste
 
+0.04     Thu Sep  5 23:55:30 2013
+       * Fix including jquery.js from Mojo
+       * Render as HTML5
+       * Looks better on iPhone
+       * Render 404 when paste is not found
+       * Trying to trick the dumbest robots
+
 0.03     Thu Sep  5 16:54:59 2013
        * Fix typo in PREREQ_PM
 

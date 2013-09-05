@@ -21,12 +21,13 @@ plan skip_all => "$ENV{PASTE_DIR} was not created" unless -d $ENV{PASTE_DIR};
     ->element_exists('a[href="https://metacpan.org/release/App-mojopaste"]')
     ;
 
-  $t->post_ok('/', form => {})
+  $t->post_ok('/', form => {})->status_is(500);
+  $t->post_ok('/', form => { p => 1 })
     ->status_is(400)
     ->element_exists('form[method="post"][action="/"]')
     ;
 
-  $t->post_ok('/', form => { content => $content })
+  $t->post_ok('/', form => { content => $content, p => 1 })
     ->status_is(302)
     ->header_like('Location', qr,:\d+/\w{12}$,)
     ;
@@ -39,14 +40,14 @@ plan skip_all => "$ENV{PASTE_DIR} was not created" unless -d $ENV{PASTE_DIR};
     ->status_is(200)
     ->element_exists(qq(a[href="/"]))
     ->element_exists(qq(a[href="/$files[0]?raw=1"]))
-    ->element_exists(qq(a[href="/?repaste=$files[0]"]))
+    ->element_exists(qq(a[href="/?edit=$files[0]"]))
     ->element_exists('pre')
     ->text_is('pre', $content)
     ;
 
   $t->get_ok("/$files[0]?raw=1")->content_is($content);
   $content =~ s/\n$//;
-  $t->get_ok("/?repaste=$files[0]")->text_is('textarea', $content);
+  $t->get_ok("/?edit=$files[0]")->text_is('textarea', $content);
 
   unlink "$ENV{PASTE_DIR}/$_" for @files;
 }

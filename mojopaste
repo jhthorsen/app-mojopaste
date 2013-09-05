@@ -9,14 +9,23 @@ my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || '/tmp/mojopaste';
 
 get '/', { file => undef, paste_id => '' }, sub {
   my $self = shift;
-  my $repaste = $self->param('repaste') or return;
-  $self->param(content => slurp "$paste_dir/$repaste");
+  my $paste_id = $self->param('edit') or return;
+  $self->param(content => slurp "$paste_dir/$paste_id");
 }, 'pastebin';
 
 post '/', { file => undef, paste_id => '' }, sub {
   my $self = shift;
-  my $content = $self->param('content') or return $self->render('pastebin', status => 400);
-  my $paste_id;
+  my($content, $paste_id);
+
+  unless($self->param('p')) {
+    return $self->render_exception('p was not set');
+  }
+
+  $content = $self->param('content') || '';
+
+  unless($content =~ /\w/) {
+    return $self->render('pastebin', status => 400);
+  }
 
   do {
     $paste_id = substr Mojo::Util::md5_sum($$.time.rand), 0, 12;
@@ -31,7 +40,10 @@ get '/:paste_id', sub {
   my $paste_id = $self->stash('paste_id');
   my $file = Mojo::Asset::File->new(path => "$paste_dir/$paste_id");
 
-  if($self->param('raw')) {
+  if(!$file->size) {
+    $self->render('pastebin', file => undef, title => 'Could not find paste', status => 404);
+  }
+  elsif($self->param('raw')) {
     $self->res->headers->content_type('text/plain');
     $self->res->content->asset($file);
     $self->rendered(200);
@@ -41,33 +53,35 @@ get '/:paste_id', sub {
   }
 }, 'show';
 
+app->defaults(title => 'Mojopaste');
 app->start;
 
 __DATA__
 @@ pastebin.html.ep
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE>
 <html>
 
 <head>
-  <title>Mojopaste</title>
+  <title><%= title %></title>
   <meta name="description" content="A Mojolicious powered pastebin">
+  <meta name="viewport" content="width=device-width, initial-scale=0.9" />
   %= stylesheet begin
   html, body, form { padding: 0; margin: 0; }
   body { padding: 10px; }
   body, textarea { background: #111; color: #eee; font-size: 12px; font-family: monospace; }
-  nav { overflow: hide; position: fixed; top: 10px; right: 20px; }
-  a { background: #fff; color: #111; text-decoration: none; border-radius: 3px; padding: 3px 6px; opacity: 0.7; }
+  nav { overflow: hide; position: fixed; top: 20px; right: 20px; }
+  a { background: #fff; color: #111; text-decoration: none; border-radius: 3px; padding: 3px 6px; opacity: 0.5; }
   a:hover { opacity: 1; }
   textarea { width: 100%; height: 400px; border: 0; outline-offset: 0; outline: 0; display: block; }
   textarea, pre { margin: 0; }
   /* from http://mojolicio.us/mojo/prettify/prettify-mojo.css */
   .str{color:#9daa7e}.kwd{color:#d5b57c}.com{color:#726d73}.typ{color:#dd7e5e}.lit{color:#fcf0a4}.pun,.opn,.clo{color:#a78353}.pln{color:#889dbc}.tag{color:#d5b57c}.atn{color:#dd7e5e}.atv{color:#9daa7e}.dec{color:#dd7e5e}
   % end
-  %= javascript '/js/jquery.js'
+  %= javascript '/mojo/jquery/jquery.js'
   %= javascript begin
   $(document).ready(function() {
   if($('pre').text().length < 50000) prettyPrint();
-  $('form a.submit').click(function(e) { e.preventDefault(); $('form').submit(); });
+  $('form a.submit').click(function(e) { e.preventDefault(); $('form').append('<input type="hidden" name="p" value="1">'); $('form').submit(); });
   $(window).resize(function() { $('textarea').focus().height($(window).height() - 24); });
   $(window).resize();
   });
@@ -110,16 +124,16 @@ __DATA__
   <nav>
   %= link_to 'New', url_for('pastebin')
   %= link_to 'Raw', url_for('show', paste_id => $paste_id)->query(raw => 1)
-  %= link_to 'Re-paste', url_for('pastebin')->query(repaste => $paste_id)
+  %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id)
   </nav>
   <pre class="prettyprint"><%= $file->slurp %></pre>
 % } else {
   %= form_for 'pastebin', method => 'post', begin
   <nav>
     <a href="#paste" class="submit">Paste</a>
-    %= link_to 'Mojopaste', 'https://metacpan.org/release/App-mojopaste', title => 'Get mojopaste'
+    <a href="https://metacpan.org/release/App-mojopaste" title="Get mojopaste">&#x25BC;</a>
   </nav>
-  %= text_area 'content', id => 'content', placeholder => 'Enter your code here.';
+  %= text_area 'content', placeholder => 'Enter your text here and then press the Paste button to the right.';
   % end
 % }
 </body>
