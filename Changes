@@ -1,5 +1,8 @@
 Revision history for App-mojopaste
 
+0.02     Thu Sep  5 16:48:08 2013
+       * Fix repository path
+
 0.01     Thu Sep  5 16:46:19 2013
        * Add bin/mojopaste
        * Add documentation

@@ -16,7 +16,7 @@ WriteMakefile(
       license => 'http://dev.perl.org/licenses/',
       homepage => 'http://p.thorsen.pm',
       bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=App-mojopaste',
-      repository => 'git://github.com/jhthorsen/app-mojopaste',
+      repository => 'git@github.com:jhthorsen/app-mojopaste.git',
     },
   },
   test => {
