@@ -22,5 +22,5 @@ WriteMakefile(
   test => {
     TESTS => 't/*.t',
   },
-  EXE_FILES => ['bin/mojobin'],
+  EXE_FILES => ['mojopaste'],
 );
