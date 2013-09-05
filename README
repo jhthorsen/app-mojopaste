@@ -1,0 +1,25 @@
+NAME
+    App::mojopaste - Placeholder for mojopaste
+
+VERSION
+    0.01
+
+DESCRIPTION
+    This module does nothing.
+
+SYNOPSIS
+      $ MOJO_CONFIG=/path/to/mojopaste.conf hypnotoad $(which mojopaste)
+      $ PASTE_DIR=/path/to/paste/dir mojopaste daemon --listen http://*:8080
+      $ morbo $(which mojopast) --listen http://*:8080
+
+  Example mojopaste.conf
+      {
+        paste_dir => '/path/to/paste/dir',
+        hypnotoad => {
+          listen => ['http://*:8080'],
+        },
+      }
+
+AUTHOR
+    Jan Henning Thorsen - "jhthorsen@cpan.org"
+
