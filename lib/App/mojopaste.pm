@@ -18,6 +18,17 @@ just fancy having your own pastebin, this is your application.
 
 You can try mojopaste out here: L<http://p.thorsen.pm>.
 
+=head2 Installation
+
+Install system wide with cpanm:
+
+  $ cpanm --sudo App::mojopaste
+
+Don't have cpanm installed?
+
+  $ curl -L http://cpanmin.us | perl - --sudo App::mojopaste
+  $ wget http://cpanmin.us -O - | perl - --sudo App::mojopaste
+
 =head2 Other pastebins
 
 =over 4
