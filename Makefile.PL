@@ -1,6 +1,6 @@
 use ExtUtils::MakeMaker;
 WriteMakefile(
-  NAME => 'App-mojopaste',
+  NAME => 'App::mojopaste',
   ABSTRACT_FROM => 'lib/App/mojopaste.pm',
   VERSION_FROM => 'lib/App/mojopaste.pm',
   AUTHOR => 'Jan Henning Thorsen <jhthorsen@cpan.org>',
@@ -16,7 +16,7 @@ WriteMakefile(
       license => 'http://dev.perl.org/licenses/',
       homepage => 'http://p.thorsen.pm',
       bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=App-mojopaste',
-      repository => 'git@github.com:jhthorsen/app-mojopaste.git',
+      repository => 'https://github.com/jhthorsen/app-mojopaste',
     },
   },
   test => {

@@ -1,5 +1,8 @@
 Revision history for App-mojopaste
 
+0.0401   Fri Sep  6 23:34:51 2013
+       * Fix Makefile.PL
+
 0.04     Thu Sep  5 23:55:30 2013
        * Fix including jquery.js from Mojo
        * Render as HTML5
