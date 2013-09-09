@@ -1,5 +1,8 @@
 Revision history for App-mojopaste
 
+0.0403   Mon Sep  9 16:27:19 2013
+       * Fix showing unicode characters
+
 0.0402   Mon Sep  9 16:08:21 2013
        * Fix pasting unicode characters
 

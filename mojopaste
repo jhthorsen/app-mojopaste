@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 use Mojolicious::Lite;
-use Mojo::Util qw/ encode spurt slurp /;
+use Mojo::Util qw/ encode decode spurt slurp /;
 use File::Path ();
 
 plugin 'config' if $ENV{MOJO_CONFIG};
@@ -10,7 +10,7 @@ my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || '/tmp/mojopaste';
 get '/', { file => undef, paste_id => '' }, sub {
   my $self = shift;
   my $paste_id = $self->param('edit') or return;
-  $self->param(content => slurp "$paste_dir/$paste_id");
+  $self->param(content => decode "UTF-8", slurp "$paste_dir/$paste_id");
 }, 'pastebin';
 
 post '/', { file => undef, paste_id => '' }, sub {
@@ -44,23 +44,22 @@ get '/:paste_id', sub {
     $self->render('pastebin', file => undef, title => 'Could not find paste', status => 404);
   }
   elsif($self->param('raw')) {
-    $self->res->headers->content_type('text/plain');
+    $self->res->headers->content_type('text/plain; charset=utf-8');
     $self->res->content->asset($file);
     $self->rendered(200);
   }
   else {
-    $self->render('pastebin', file => $file);
+    $self->render(content => decode "UTF-8", $file->slurp);
   }
 }, 'show';
 
-app->defaults(title => 'Mojopaste');
+app->defaults(title => 'Mojopaste', layout => 'default');
 app->start;
 
 __DATA__
-@@ pastebin.html.ep
+@@ layouts/default.html.ep
 <!DOCTYPE>
 <html>
-
 <head>
   <title><%= title %></title>
   <meta name="description" content="A Mojolicious powered pastebin">
@@ -120,22 +119,21 @@ __DATA__
 </head>
 
 <body>
-% if($file) {
-  <nav>
-  %= link_to 'New', url_for('pastebin')
-  %= link_to 'Raw', url_for('show', paste_id => $paste_id)->query(raw => 1)
-  %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id)
-  </nav>
-  <pre class="prettyprint"><%= $file->slurp %></pre>
-% } else {
-  %= form_for 'pastebin', method => 'post', begin
+  %= content
+</body>
+</html>
+@@ pastebin.html.ep
+%= form_for 'pastebin', method => 'post', begin
   <nav>
     <a href="#paste" class="submit">Paste</a>
     <a href="https://metacpan.org/release/App-mojopaste" title="Get mojopaste">&#x25BC;</a>
   </nav>
-  %= text_area 'content', placeholder => 'Enter your text here and then press the Paste button to the right.';
-  % end
-% }
-</body>
-
-</html>
+  %= text_area 'content', placeholder => 'Enter your text here and then press the Paste button to the right.'
+% end
+@@ show.html.ep
+<nav>
+%= link_to 'New', url_for('pastebin')
+%= link_to 'Raw', url_for('show', paste_id => $paste_id)->query(raw => 1)
+%= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id)
+</nav>
+<pre class="prettyprint"><%= $content %></pre>
