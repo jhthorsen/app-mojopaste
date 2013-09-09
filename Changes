@@ -1,5 +1,8 @@
 Revision history for App-mojopaste
 
+0.0402   Mon Sep  9 16:08:21 2013
+       * Fix pasting unicode characters
+
 0.0401   Fri Sep  6 23:34:51 2013
        * Fix Makefile.PL
 
