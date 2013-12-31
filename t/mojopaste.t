@@ -17,8 +17,9 @@ plan skip_all => "$ENV{PASTE_DIR} was not created" unless -d $ENV{PASTE_DIR};
   $t->get_ok('/')
     ->status_is(200)
     ->element_exists('form[method="post"][action="/"]')
-    ->element_exists('a.submit')
+    ->element_exists('a.button')
     ->element_exists('a[href="https://metacpan.org/release/App-mojopaste"]')
+    ->element_exists_not('button')
     ;
 
   $t->post_ok('/', form => {})->status_is(500);

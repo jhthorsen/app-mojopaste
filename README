@@ -2,7 +2,7 @@ NAME
     App::mojopaste - Pastebin application
 
 VERSION
-    0.0403
+    0.05
 
 DESCRIPTION
     Mojopaste is a pastebin application. There's about one million of these
@@ -39,10 +39,14 @@ SYNOPSIS
 
           {
             paste_dir => '/path/to/paste/dir',
+            allow_robots => 1, # default is 0
             hypnotoad => {
               listen => ['http://*:8080'],
             },
           }
+
+        "allow_robots" will disable javascript requirements and allow simple
+        scripts (robots) to use the pastebin without much knowledge.
 
         Check out Mojo::Server::Hypnotoad for more hypnotoad options.
 

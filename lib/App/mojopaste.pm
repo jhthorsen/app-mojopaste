@@ -6,7 +6,7 @@ App::mojopaste - Pastebin application
 
 =head1 VERSION
 
-0.0403
+0.05
 
 =head1 DESCRIPTION
 
@@ -49,10 +49,14 @@ Example mojopaste.conf:
 
   {
     paste_dir => '/path/to/paste/dir',
+    allow_robots => 1, # default is 0
     hypnotoad => {
       listen => ['http://*:8080'],
     },
   }
+
+"allow_robots" will disable javascript requirements and allow simple
+scripts (robots) to use the pastebin without much knowledge.
 
 Check out L<Mojo::Server::Hypnotoad> for more hypnotoad options.
 
@@ -72,7 +76,7 @@ Check out L<Mojo::Server::Hypnotoad> for more hypnotoad options.
 
 =cut
 
-our $VERSION = '0.0403';
+our $VERSION = '0.05';
 
 =head1 AUTHOR
 

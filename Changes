@@ -1,5 +1,8 @@
 Revision history for App-mojopaste
 
+0.05     Tue Dec 31 19:39:07 2013
+       * Allow pasting without javascript enabled
+
 0.0403   Mon Sep  9 16:27:19 2013
        * Fix showing unicode characters
 
