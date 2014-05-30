@@ -48,7 +48,7 @@ plan skip_all => "$ENV{PASTE_DIR} was not created" unless -d $ENV{PASTE_DIR};
 
   $t->get_ok("/$files[0]?raw=1")->content_is($content);
   $content =~ s/\n$//;
-  $t->get_ok("/?edit=$files[0]")->text_is('textarea', $content);
+  $t->get_ok("/?edit=$files[0]")->text_is('textarea', "$content\n");
 
   unlink "$ENV{PASTE_DIR}/$_" for @files;
 }

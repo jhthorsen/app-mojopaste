@@ -1,5 +1,8 @@
 Revision history for App-mojopaste
 
+0.0501   Fri May 30 08:02:31 2014
+       * Fix fragile test t/mojopaste.t
+
 0.05     Tue Dec 31 19:39:07 2013
        * Allow pasting without javascript enabled
 
