@@ -6,7 +6,6 @@ WriteMakefile(
   AUTHOR => 'Jan Henning Thorsen <jhthorsen@cpan.org>',
   LICENSE => 'perl',
   PREREQ_PM => {
-    'Mojolicious' => '4.30',
   },
   BUILD_REQUIRES => {
     'Test::More' => '0.90',
@@ -15,7 +14,7 @@ WriteMakefile(
     resources => {
       license => 'http://dev.perl.org/licenses/',
       homepage => 'http://p.thorsen.pm',
-      bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=App-mojopaste',
+      bugtracker => 'https://github.com/jhthorsen/app-mojopaste/issues',
       repository => 'https://github.com/jhthorsen/app-mojopaste',
     },
   },

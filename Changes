@@ -1,5 +1,8 @@
 Revision history for App-mojopaste
 
+0.06
+       * Change bugracker
+
 0.0501   Fri May 30 08:02:31 2014
        * Fix fragile test t/mojopaste.t
 
