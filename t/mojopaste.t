@@ -30,7 +30,7 @@ plan skip_all => "$ENV{PASTE_DIR} was not created" unless -d $ENV{PASTE_DIR};
 
   $t->post_ok('/', form => { content => $content, p => 1 })
     ->status_is(302)
-    ->header_like('Location', qr,:\d+/\w{12}$,)
+    ->header_like('Location', qr[^/\w{12}$])
     ;
 
   get_paste_files();
