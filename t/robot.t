@@ -24,7 +24,7 @@ plan skip_all => "$ENV{PASTE_DIR} was not created" unless -d $ENV{PASTE_DIR};
 
   $t->post_ok('/', form => { content => $content })
     ->status_is(302)
-    ->header_like('Location', qr,:\d+/\w{12}$,)
+    ->header_like('Location', qr|^/\w{12}$|)
     ;
 
   unlink glob "$ENV{PASTE_DIR}/*";
