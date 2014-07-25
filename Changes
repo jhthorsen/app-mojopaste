@@ -1,5 +1,8 @@
 Revision history for App-mojopaste
 
+0.09
+       * Add support for .txt as raw format
+
 0.08     Tue Jul 22 17:00:15 2014
        * Compatible with Mojolicious 5.xx
 

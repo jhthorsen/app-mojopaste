@@ -39,12 +39,13 @@ post '/' => sub {
 get '/:paste_id', sub {
   my $self = shift;
   my $paste_id = $self->stash('paste_id');
+  my $format = $self->stash('format') || '';
   my $file = Mojo::Asset::File->new(path => "$paste_dir/$paste_id");
 
   if(!$file->size) {
     $self->render('pastebin', file => undef, title => 'Could not find paste', status => 404);
   }
-  elsif($self->param('raw')) {
+  elsif($self->param('raw') or $format eq 'txt') {
     $self->res->headers->content_type('text/plain; charset=utf-8');
     $self->res->content->asset($file);
     $self->rendered(200);
@@ -137,7 +138,7 @@ __DATA__
 @@ show.html.ep
 <nav>
 %= link_to 'New', url_for('pastebin')
-%= link_to 'Raw', url_for('show', paste_id => $paste_id)->query(raw => 1)
+%= link_to 'Raw', url_for('show', paste_id => $paste_id, format => 'txt');
 %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id)
 </nav>
 <pre class="prettyprint"><%= $content %></pre>
