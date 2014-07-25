@@ -8,13 +8,13 @@ my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || '/tmp/mojopaste';
 my $allow_robots = app->config('allow_robots') || $ENV{PASTE_ALLOW_ROBOTS};
 -d $paste_dir or File::Path::mkpath($paste_dir) or die "mkpath $paste_dir: $!";
 
-get '/', { file => undef, paste_id => '' }, sub {
+get '/' => sub {
   my $self = shift;
   my $paste_id = $self->param('edit') or return;
   $self->param(content => decode "UTF-8", slurp "$paste_dir/$paste_id");
 }, 'pastebin';
 
-post '/', { file => undef, paste_id => '' }, sub {
+post '/' => sub {
   my $self = shift;
   my($content, $paste_id);
 
