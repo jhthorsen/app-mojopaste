@@ -1,7 +1,9 @@
 Revision history for App-mojopaste
 
-0.09
+0.09     Thu Aug  7 11:14:00 2014
        * Add support for .txt as raw format
+       * Add focus on textarea on load
+       * Change to plain javascript (no jQuery)
        * New design with bottom navbar
 
 0.08     Tue Jul 22 17:00:15 2014
