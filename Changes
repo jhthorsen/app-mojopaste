@@ -1,7 +1,7 @@
 Revision history for App-mojopaste
 
 0.10     Thu Aug  7 17:51:23 2014
-       * Fix button border styling, #1
+       * Fix button border styling, #2
 
 0.09     Thu Aug  7 11:14:00 2014
        * Add support for .txt as raw format
