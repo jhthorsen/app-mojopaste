@@ -6,7 +6,7 @@ App::mojopaste - Pastebin application
 
 =head1 VERSION
 
-0.09
+0.10
 
 =head1 DESCRIPTION
 
@@ -76,7 +76,7 @@ Check out L<Mojo::Server::Hypnotoad> for more hypnotoad options.
 
 =cut
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 =head1 AUTHOR
 
