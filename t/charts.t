@@ -66,12 +66,12 @@ $t->post_ok('/', form => { content => $content, p => 1 })->status_is(302);
 $file = $t->tx->res->headers->location =~ m!/(\w+)$! ? $1 : 'nope';
 $t->get_ok("/$file/chart")->status_is(200)->content_unlike(qr{new Morris})->text_like('#chart', qr{Could not parse chart data:});
 
-$content = qq( "labels"\n: ["Down", "Up"],,,, invali\nd );
-$t->post_ok('/', form => { content => $content, p => 1 })->status_is(302);
-$file = $t->tx->res->headers->location =~ m!/(\w+)$! ? $1 : 'nope';
-$t->get_ok("/$file/chart")->status_is(200)->content_unlike(qr{new Morris})->text_like('#chart', qr{Could not parse CSV data:});
-
 if (eval 'require Text::CSV;1') {
+  $content = qq( "labels"\n: ["Down", "Up"],,,, invali\nd );
+  $t->post_ok('/', form => { content => $content, p => 1 })->status_is(302);
+  $file = $t->tx->res->headers->location =~ m!/(\w+)$! ? $1 : 'nope';
+  $t->get_ok("/$file/chart")->status_is(200)->content_unlike(qr{new Morris})->text_like('#chart', qr{Could not parse CSV data:});
+
   $content = <<"HERE";
 
 
@@ -98,7 +98,7 @@ HERE
   is($json->{xkey}, 'Date', 'xkey');
 }
 else {
-  skip 'Text::CSV is required', 1;
+  SKIP: { skip 'Text::CSV is required', 1; }
 }
 
 unlink glob("$ENV{PASTE_DIR}/*");
