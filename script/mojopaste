@@ -134,6 +134,7 @@ __DATA__
   <title><%= title %></title>
   <meta name="description" content="A Mojolicious powered pastebin">
   <meta name="viewport" content="width=device-width, initial-scale=0.9" />
+  %= stylesheet '//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css' if stash 'chart';
   %= stylesheet begin
   html, body, form { padding: 0; margin: 0; }
   body, textarea { background: #222; color: #bbb; font-size: 14px; font-family: 'Helvetica Neue', Helvetica, sans-serif; }
@@ -149,6 +150,7 @@ __DATA__
   textarea { width: 100%; height: 90%; border: 0; outline-offset: 0; outline: 0; display: block; }
   pre { margin-bottom: 60px; }
   .str{color:#9daa7e}.kwd{color:#d5b57c}.com{color:#726d73}.typ{color:#dd7e5e}.lit{color:#fcf0a4}.pun,.opn,.clo{color:#a78353}.pln{color:#889dbc}.tag{color:#d5b57c}.atn{color:#dd7e5e}.atv{color:#9daa7e}.dec{color:#dd7e5e}
+  .morris-hover.morris-default-style{background:rgba(25,25,25,0.9);border:0;color:#ccc}
   % end
   <script type="text/javascript">
   window.addEventListener('load', function(e) {
@@ -220,7 +222,6 @@ __DATA__
   %= include 'powered_by'
 </nav>
 <div id="chart" style="height:90%"><%= $error %></div>
-<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
