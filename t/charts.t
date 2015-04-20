@@ -42,7 +42,8 @@ $content = q(
      {
   "labels": ["Down", "Up"],
   "data": [
-    { "x": "2015-02-04 15:03", "a": 120, "b": 90 },
+    { "x": "2015-02-04 15:03", "b": 90 },
+    { "x": "2015-02-04 15:03", "a": 120, "b": 90, "c": 12 },
     { "x": "2015-03-14", "a": 75, "b": 65 },
     { "x": "2015-04", "a": 100, "b": 40 }
   ]
@@ -53,7 +54,7 @@ $t->get_ok("/$file/chart")->status_is(200);
 
 $json = $t->tx->res->body =~ m!new Morris\.Line\(([^\)]+)\)! ? Mojo::JSON::decode_json($1) : undef;
 is_deeply($json->{labels}, ['Down', 'Up'], 'labels');
-is_deeply($json->{ykeys}, ['a', 'b'], 'default ykeys');
+is_deeply($json->{ykeys}, ['a', 'b', 'c'], 'default ykeys');
 
 $content = qq( { "labels": ["Down", "Up"],,,, invalid );
 $t->post_ok('/', form => { content => $content, p => 1 })->status_is(302);

@@ -2,6 +2,7 @@ Revision history for perl distribution App-mojopaste
 
 0.12 Not Released
  - Capture chart errors
+ - Will construct default ykeys from all chart elements
 
 0.11 2015-04-20T15:15:43+0200
  - Can make charts using morris.js

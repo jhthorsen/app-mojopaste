@@ -99,7 +99,7 @@ $enable_charts and get '/:paste_id/chart', sub {
   $chart->{element} = 'chart';
   $chart->{resize} = \1;
   $chart->{xkey} ||= 'x';
-  $chart->{ykeys} ||= [sort grep { $_ ne $chart->{xkey} } keys %{$chart->{data}[0] || {}}];
+  $chart->{ykeys} ||= _cols($chart->{xkey}, $chart->{data});
   $chart->{labels} ||= $chart->{ykeys};
 
   $error =~ s!at .*? line \d+$!! if $error;
@@ -108,6 +108,18 @@ $enable_charts and get '/:paste_id/chart', sub {
 
 app->defaults(title => 'Mojopaste', layout => 'default', allow_robots => $allow_robots, enable_charts => $enable_charts);
 app->start;
+
+sub _cols {
+  my ($skip, $rows) = @_;
+  my %cols;
+
+  for my $row (@$rows) {
+    $cols{$_} = 1 for keys %$row;
+  }
+
+  delete $cols{$skip};
+  return [sort keys %cols];
+}
 
 __DATA__
 @@ layouts/default.html.ep
