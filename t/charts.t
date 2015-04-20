@@ -36,7 +36,10 @@ is_deeply($json->{ykeys}, ['a', 'b'], 'default ykeys');
 is($json->{element}, 'chart', 'default element');
 is($json->{xkey}, 'x', 'default xkey');
 
-$content = q({
+$content = q(
+  // some comment
+# Some other comment
+     {
   "labels": ["Down", "Up"],
   "data": [
     { "x": "2015-02-04 15:03", "a": 120, "b": 90 },
@@ -54,10 +57,20 @@ is_deeply($json->{ykeys}, ['a', 'b'], 'default ykeys');
 
 if (eval 'require Text::CSV;1') {
   $content = <<"HERE";
+
+
+#
+# This data is retrive from this command...
+#
+
 Date,Down,Up
 2015-02-04 15:03,120,90
 2015-03-14,75,65
+
+# this is a bit weird...?
 2015-04,100,40
+
+#
 HERE
   $t->post_ok('/', form => { content => $content, p => 1 })->status_is(302);
   $file = $t->tx->res->headers->location =~ m!/(\w+)$! ? $1 : 'nope';

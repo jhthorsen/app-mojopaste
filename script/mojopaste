@@ -2,7 +2,7 @@
 use Mojolicious::Lite;
 use Mojo::Util qw( encode decode spurt slurp );
 use File::Path ();
-use constant HUMAN_JSON => eval 'require JSON;1' || 0;
+use constant HUMAN_JSON => eval 'require JSON;JSON->new->utf8(1)->relaxed(1)->allow_barekey(1)' || 0;
 
 plugin 'config' if $ENV{MOJO_CONFIG};
 
@@ -57,28 +57,28 @@ get '/:paste_id', sub {
 $enable_charts and get '/:paste_id/chart', sub {
   my $c        = shift;
   my $paste_id = $c->stash('paste_id');
-  my $chart    = Mojo::Asset::File->new(path => "$paste_dir/$paste_id")->slurp;
+  my @lines    = grep { ! m!^\s*(?://|\#)! and $_ =~ /\S/ } split /\r?\n/, Mojo::Asset::File->new(path => "$paste_dir/$paste_id")->slurp;
+  my $chart    = {data => []};
 
-  $chart =~ s!\r!!g;
-
-  if ($chart =~ /^\s*\[/s) {    # data
-    $chart = {data => HUMAN_JSON ? JSON->new->utf8(1)->relaxed(1)->allow_barekey(1)->decode($chart) : Mojo::JSON::decode_json($chart)};
+  if (!@lines) {
+    1; # nothing in, nothing out
   }
-  elsif ($chart =~ /^\s*\{/s) {    # morris data
-    $chart = HUMAN_JSON ? JSON->new->utf8(1)->relaxed(1)->allow_barekey(1)->decode($chart) : Mojo::JSON::decode_json($chart);
+  elsif ($lines[0] =~ /^\s*\[/s) {    # data
+    $chart = {data => HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines")};
+  }
+  elsif ($lines[0] =~ /^\s*\{/s) {    # morris data
+    $chart = HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines");
   }
   else {                      # csv
     eval 'require Text::CSV;1' or return $c->render(text => 'Text::CSV is required.');
     my $csv = Text::CSV->new;
-    my @rows = split /\n/, $chart;
 
-    $chart = {data => []};
-    $csv->parse(shift @rows);    # heading
+    $csv->parse(shift @lines);    # heading
     $chart->{ykeys} = [$csv->fields];
     $chart->{xkey}  = shift @{$chart->{ykeys}};
 
-    while (@rows) {
-      $csv->parse(shift @rows) or die $csv->error_input;
+    while (@lines) {
+      $csv->parse(shift @lines) or die $csv->error_input;
       my @row = $csv->fields or next;
       push @{$chart->{data}}, {$chart->{xkey} => shift(@row), map { ($_ => 0 + shift @row) } @{$chart->{ykeys}}};
     }

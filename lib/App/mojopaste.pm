@@ -62,6 +62,8 @@ allowing JavaScript notation instead of strict JSON.
 =item * Just data
 
   [
+    // comments are allowed
+    # both "#" and "//" can be used anywhere, but on a line by itself
     { "x": "2015-02-04 15:03", "a": 120, "b": 90 },
     { "x": "2015-03-14", "a": 75, "b": 65 },
     { "x": "2015-04", "a": 100, "b": 40 }
@@ -75,6 +77,7 @@ The rest will use the default value rules from above.
 CSV data is similar to L</Just data> above, except the first line is used as
 "xkey,ykey1,ykey2,...". Example:
 
+  # Can have comments in CSV input as well
   x,a,b
   2015-02-04 15:03,120,90
   2015-03-14,75,65
