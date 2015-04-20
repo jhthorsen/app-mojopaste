@@ -1,5 +1,8 @@
 Revision history for perl distribution App-mojopaste
 
+0.11 Not Released
+ - Can make charts using morris.js
+
 0.10 2014-08-07T17:51:23Z
  - Fix button border styling, #2
 

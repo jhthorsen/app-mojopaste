@@ -37,11 +37,16 @@ $t->get_ok($t->tx->res->headers->location)
   ->element_exists(qq(a[href="/"]))
   ->element_exists(qq(a[href="/$files[0].txt"]))
   ->element_exists(qq(a[href="/?edit=$files[0]"]))
+  ->element_exists_not(qq(a[href\$="/chart"])) # $ENV{PASTE_ENABLE_CHARTS} is not set
   ->element_exists('pre')
   ->text_is('pre', $content)
   ;
 
+# $ENV{PASTE_ENABLE_CHARTS} is not set
+$t->get_ok("/$files[0]/chart")->status_is(404);
+
 $t->get_ok("/$files[0].txt")->content_is($content);
+
 $content =~ s/\n$//;
 $t->get_ok("/?edit=$files[0]")->text_is('textarea', "$content\n");
 

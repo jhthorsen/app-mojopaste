@@ -1,11 +1,14 @@
 #!/usr/bin/env perl
 use Mojolicious::Lite;
-use Mojo::Util qw/ encode decode spurt slurp /;
+use Mojo::Util qw( encode decode spurt slurp );
 use File::Path ();
+use constant HUMAN_JSON => eval 'require JSON;1' || 0;
 
 plugin 'config' if $ENV{MOJO_CONFIG};
-my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || '/tmp/mojopaste';
-my $allow_robots = app->config('allow_robots') || $ENV{PASTE_ALLOW_ROBOTS};
+
+my $paste_dir     = app->config('paste_dir')     || $ENV{PASTE_DIR} || '/tmp/mojopaste';
+my $allow_robots  = app->config('allow_robots')  || $ENV{PASTE_ALLOW_ROBOTS};
+my $enable_charts = app->config('enable_charts') || $ENV{PASTE_ENABLE_CHARTS};
 -d $paste_dir or File::Path::mkpath($paste_dir) or die "mkpath $paste_dir: $!";
 
 get '/' => sub {
@@ -51,7 +54,46 @@ get '/:paste_id', sub {
   }
 }, 'show';
 
-app->defaults(title => 'Mojopaste', layout => 'default', allow_robots => $allow_robots);
+$enable_charts and get '/:paste_id/chart', sub {
+  my $c        = shift;
+  my $paste_id = $c->stash('paste_id');
+  my $chart    = Mojo::Asset::File->new(path => "$paste_dir/$paste_id")->slurp;
+
+  $chart =~ s!\r!!g;
+
+  if ($chart =~ /^\s*\[/s) {    # data
+    $chart = {data => HUMAN_JSON ? JSON->new->utf8(1)->relaxed(1)->allow_barekey(1)->decode($chart) : Mojo::JSON::decode_json($chart)};
+  }
+  elsif ($chart =~ /^\s*\{/s) {    # morris data
+    $chart = HUMAN_JSON ? JSON->new->utf8(1)->relaxed(1)->allow_barekey(1)->decode($chart) : Mojo::JSON::decode_json($chart);
+  }
+  else {                      # csv
+    eval 'require Text::CSV;1' or return $c->render(text => 'Text::CSV is required.');
+    my $csv = Text::CSV->new;
+    my @rows = split /\n/, $chart;
+
+    $chart = {data => []};
+    $csv->parse(shift @rows);    # heading
+    $chart->{ykeys} = [$csv->fields];
+    $chart->{xkey}  = shift @{$chart->{ykeys}};
+
+    while (@rows) {
+      $csv->parse(shift @rows) or die $csv->error_input;
+      my @row = $csv->fields or next;
+      push @{$chart->{data}}, {$chart->{xkey} => shift(@row), map { ($_ => 0 + shift @row) } @{$chart->{ykeys}}};
+    }
+  }
+
+  $chart->{element} = 'chart';
+  $chart->{resize} = \1;
+  $chart->{xkey} ||= 'x';
+  $chart->{ykeys} ||= [sort grep { $_ ne $chart->{xkey} } keys %{$chart->{data}[0] || []}];
+  $chart->{labels} ||= $chart->{ykeys};
+
+  $c->render(chart => $chart);
+}, 'chart';
+
+app->defaults(title => 'Mojopaste', layout => 'default', allow_robots => $allow_robots, enable_charts => $enable_charts);
 app->start;
 
 __DATA__
@@ -140,8 +182,34 @@ __DATA__
 </nav>
 %= text_area 'content', placeholder => 'Enter your text here and then press the Paste button.', tabindex => 1
 % end
+@@ chart.html.ep
+<nav>
+  %= link_to 'Data', url_for('show', paste_id => $paste_id), class => 'btn first'
+  %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id), class => 'btn'
+  %= link_to 'New', 'pastebin', class => 'btn'
+  %= include 'powered_by'
+</nav>
+<div id="chart" style="height:90%"></div>
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
+<script>
+try {
+  new Morris.Line(<%== Mojo::JSON::encode_json($chart) %>);
+} catch(e) {
+  document.getElementById('chart').innerHTML = 'Invalid chart data. ' + e;
+}
+window.addEventListener('load', function(e) {
+  var chart = document.getElementById('chart');
+  var resize = function() { chart.style.height = window.innerHeight - document.getElementsByTagName('nav')[0].clientHeight + 'px'; };
+  window.addEventListener('resize', resize);
+  resize();
+});
+</script>
 @@ show.html.ep
 <nav>
+  %= link_to 'Graph', url_for('chart'), class => 'btn' if $enable_charts
   %= link_to 'Raw', url_for('show', paste_id => $paste_id, format => 'txt'), class => 'btn first'
   %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id), class => 'btn'
   %= link_to 'New', 'pastebin', class => 'btn'
