@@ -59,15 +59,24 @@ $enable_charts and get '/:paste_id/chart', sub {
   my $paste_id = $c->stash('paste_id');
   my @lines    = grep { ! m!^\s*(?://|\#)! and $_ =~ /\S/ } split /\r?\n/, Mojo::Asset::File->new(path => "$paste_dir/$paste_id")->slurp;
   my $chart    = {data => []};
+  my $error;
 
   if (!@lines) {
     1; # nothing in, nothing out
   }
-  elsif ($lines[0] =~ /^\s*\[/s) {    # data
-    $chart = {data => HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines")};
+  elsif ($lines[0] =~ /^\s*\[/s) {    # morris data
+    eval {
+      $chart->{data} = HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines");
+    } or do {
+      $c->app->log->warn($error = "Could not parse chart data: $@");
+    };
   }
-  elsif ($lines[0] =~ /^\s*\{/s) {    # morris data
-    $chart = HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines");
+  elsif ($lines[0] =~ /^\s*\{/s) {    # morris arguments
+    eval {
+      $chart = HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines");
+    } or do {
+      $c->app->log->warn($error = "Could not parse chart arguments: $@");
+    };
   }
   else {                      # csv
     eval 'require Text::CSV;1' or return $c->render(text => 'Text::CSV is required.');
@@ -78,7 +87,10 @@ $enable_charts and get '/:paste_id/chart', sub {
     $chart->{xkey}  = shift @{$chart->{ykeys}};
 
     while (@lines) {
-      $csv->parse(shift @lines) or die $csv->error_input;
+      unless ($csv->parse(shift @lines)) {
+        $c->app->log->warn($error = "Could not parse CSV data: " .$csv->error_input);
+        last;
+      }
       my @row = $csv->fields or next;
       push @{$chart->{data}}, {$chart->{xkey} => shift(@row), map { ($_ => 0 + shift @row) } @{$chart->{ykeys}}};
     }
@@ -87,10 +99,11 @@ $enable_charts and get '/:paste_id/chart', sub {
   $chart->{element} = 'chart';
   $chart->{resize} = \1;
   $chart->{xkey} ||= 'x';
-  $chart->{ykeys} ||= [sort grep { $_ ne $chart->{xkey} } keys %{$chart->{data}[0] || []}];
+  $chart->{ykeys} ||= [sort grep { $_ ne $chart->{xkey} } keys %{$chart->{data}[0] || {}}];
   $chart->{labels} ||= $chart->{ykeys};
 
-  $c->render(chart => $chart);
+  $error =~ s!at .*? line \d+$!! if $error;
+  $c->render(chart => $chart, error => $error);
 }, 'chart';
 
 app->defaults(title => 'Mojopaste', layout => 'default', allow_robots => $allow_robots, enable_charts => $enable_charts);
@@ -189,17 +202,19 @@ __DATA__
   %= link_to 'New', 'pastebin', class => 'btn'
   %= include 'powered_by'
 </nav>
-<div id="chart" style="height:90%"></div>
+<div id="chart" style="height:90%"><%= $error %></div>
 <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css">
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
 <script>
+% unless ($error) {
 try {
   new Morris.Line(<%== Mojo::JSON::encode_json($chart) %>);
 } catch(e) {
   document.getElementById('chart').innerHTML = 'Invalid chart data. ' + e;
 }
+% }
 window.addEventListener('load', function(e) {
   var chart = document.getElementById('chart');
   var resize = function() { chart.style.height = window.innerHeight - document.getElementsByTagName('nav')[0].clientHeight + 'px'; };
