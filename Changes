@@ -1,51 +1,52 @@
-Revision history for App-mojopaste
+Revision history for perl distribution App-mojopaste
 
-0.10     Thu Aug  7 17:51:23 2014
-       * Fix button border styling, #2
+0.10 2014-08-07T17:51:23Z
+ - Fix button border styling, #2
 
-0.09     Thu Aug  7 11:14:00 2014
-       * Add support for .txt as raw format
-       * Add focus on textarea on load
-       * Change to plain javascript (no jQuery)
-       * New design with bottom navbar
+0.09 2014-08-07T11:14:00Z
+ - Add support for .txt as raw format
+ - Add focus on textarea on load
+ - Change to plain javascript (no jQuery)
+ - New design with bottom navbar
 
-0.08     Tue Jul 22 17:00:15 2014
-       * Compatible with Mojolicious 5.xx
+0.08 2014-07-22T17:00:15Z
+ - Compatible with Mojolicious 5.xx
 
-0.07     Mon Jul 21 06:52:09 2014
-       * Compatible with Mojolicious 5.xx
+0.07 2014-07-21T06:52:09Z
+ - Compatible with Mojolicious 5.xx
 
-0.06     Fri Jul 18 02:13:05 2014
-       * Change bugracker
+0.06 2014-07-18T02:13:05Z
+ - Change bugracker
 
-0.0501   Fri May 30 08:02:31 2014
-       * Fix fragile test t/mojopaste.t
+0.0501 2014-05-30T08:02:31Z
+ - Fix fragile test t/mojopaste.t
 
-0.05     Tue Dec 31 19:39:07 2013
-       * Allow pasting without javascript enabled
+0.05 2013-12-31T19:39:07Z
+ - Allow pasting without javascript enabled
 
-0.0403   Mon Sep  9 16:27:19 2013
-       * Fix showing unicode characters
+0.0403 2013-09-09T16:27:19Z
+ - Fix showing unicode characters
 
-0.0402   Mon Sep  9 16:08:21 2013
-       * Fix pasting unicode characters
+0.0402 2013-09-09T16:08:21Z
+ - Fix pasting unicode characters
 
-0.0401   Fri Sep  6 23:34:51 2013
-       * Fix Makefile.PL
+0.0401 2013-09-06T23:34:51Z
+ - Fix Makefile.PL
 
-0.04     Thu Sep  5 23:55:30 2013
-       * Fix including jquery.js from Mojo
-       * Render as HTML5
-       * Looks better on iPhone
-       * Render 404 when paste is not found
-       * Trying to trick the dumbest robots
+0.04 2013-09-05T23:55:30Z
+ - Fix including jquery.js from Mojo
+ - Render as HTML5
+ - Looks better on iPhone
+ - Render 404 when paste is not found
+ - Trying to trick the dumbest robots
 
-0.03     Thu Sep  5 16:54:59 2013
-       * Fix typo in PREREQ_PM
+0.03 2013-09-05T16:54:59Z
+ - Fix typo in PREREQ_PM
 
-0.02     Thu Sep  5 16:48:08 2013
-       * Fix repository path
+0.02 2013-09-05T16:48:08Z
+ - Fix repository path
 
-0.01     Thu Sep  5 16:46:19 2013
-       * Add bin/mojopaste
-       * Add documentation
+0.01 2013-09-05T16:46:19Z
+ - Add bin/mojopaste
+ - Add documentation
+

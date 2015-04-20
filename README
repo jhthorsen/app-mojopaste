@@ -6,7 +6,7 @@ VERSION
 
 DESCRIPTION
     Mojopaste is a pastebin application. There's about one million of these
-    out there. But if you have the need to run something internally at work
+    out there, but if you have the need to run something internally at work
     or you just fancy having your own pastebin, this is your application.
 
 DEMO
@@ -38,8 +38,9 @@ SYNOPSIS
         Example mojopaste.conf:
 
           {
-            paste_dir => '/path/to/paste/dir',
-            allow_robots => 1, # default is 0
+            paste_dir       => '/path/to/paste/dir',
+            allow_robots    => 1, # default is 0
+            enable_plotting => 1, # default is 0
             hypnotoad => {
               listen => ['http://*:8080'],
             },
@@ -47,6 +48,9 @@ SYNOPSIS
 
         "allow_robots" will disable javascript requirements and allow simple
         scripts (robots) to use the pastebin without much knowledge.
+
+        "enable_plotting" is for allowing a button to graph input data using
+        morris.js <http://morrisjs.github.io/morris.js>
 
         Check out Mojo::Server::Hypnotoad for more hypnotoad options.
 
