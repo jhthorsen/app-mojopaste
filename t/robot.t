@@ -6,7 +6,7 @@ use Test::Mojo;
 $ENV{PASTE_DIR} = 't/paste';
 $ENV{PASTE_ALLOW_ROBOTS} = 1;
 
-plan skip_all => $@ unless eval { require 'mojopaste' };
+plan skip_all => $@ unless do 'script/mojopaste';
 
 my $t = Test::Mojo->new;
 my $content = "var foo = 123; # cool!\n";

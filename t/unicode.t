@@ -6,7 +6,8 @@ use Test::Mojo;
 
 $ENV{PASTE_DIR} = 't/paste';
 
-plan skip_all => $@ unless eval { require 'mojopaste' };
+plan skip_all => 'Cannot write to paste dir' unless -w $ENV{PASTE_DIR};
+plan skip_all => $@ unless do 'script/mojopaste';
 
 my $t = Test::Mojo->new;
 my $content = "BLACK DOWN-POINTING TRIANGLE \x{3a3}";
