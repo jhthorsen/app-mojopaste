@@ -13,21 +13,18 @@ my $content = "var foo = 123; # cool!\n";
 
 plan skip_all => "$ENV{PASTE_DIR} was not created" unless -d $ENV{PASTE_DIR};
 
-{
-  $t->get_ok('/')
-    ->status_is(200)
-    ->element_exists('form[method="post"][action="/"]')
-    ->element_exists('button')
-    ->element_exists('a[href="https://metacpan.org/release/App-mojopaste"]')
-    ->element_exists_not('a.button')
-    ;
+$t->get_ok('/')
+  ->status_is(200)
+  ->element_exists('form[method="post"][action="/"]')
+  ->element_exists('button')
+  ->element_exists_not('a.button')
+  ;
 
-  $t->post_ok('/', form => { content => $content })
-    ->status_is(302)
-    ->header_like('Location', qr|^/\w{12}$|)
-    ;
+$t->post_ok('/', form => { content => $content })
+  ->status_is(302)
+  ->header_like('Location', qr|^/\w{12}$|)
+  ;
 
-  unlink glob "$ENV{PASTE_DIR}/*";
-}
+unlink glob "$ENV{PASTE_DIR}/*";
 
 done_testing;

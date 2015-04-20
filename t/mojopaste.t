@@ -18,7 +18,7 @@ $t->get_ok('/')
   ->status_is(200)
   ->element_exists('form[method="post"][action="invalid"]', 'javascript is required')
   ->element_exists('button')
-  ->element_exists('a[href="https://metacpan.org/release/App-mojopaste"]')
+  ->element_exists('a[href="https://metacpan.org/pod/App::mojopaste#DESCRIPTION"]')
   ;
 
 $t->post_ok('/')->status_is(400)->element_exists('form[method="post"][action="invalid"]');

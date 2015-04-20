@@ -1,5 +1,8 @@
 Revision history for perl distribution App-mojopaste
 
+0.15 Not Released
+ - Change "Powered by" URL
+
 0.14 2015-04-20T17:03:36+0200
  - Fix unit tests
 
