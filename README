@@ -2,12 +2,80 @@ NAME
     App::mojopaste - Pastebin application
 
 VERSION
-    0.10
+    0.11
 
 DESCRIPTION
     Mojopaste is a pastebin application. There's about one million of these
     out there, but if you have the need to run something internally at work
     or you just fancy having your own pastebin, this is your application.
+
+  Text and code
+    The standard version of App::mojopaste can take normal text as input,
+    store it as a text file on the server and render the content as either
+    plain text or prettified using Google prettify
+    <https://code.google.com/p/google-code-prettify/>. (Note: Maybe another
+    prettifier will be used in future versions)
+
+  Charts
+    In addition to just supporting text, this application can also make
+    charts from the input data. To turn this feature on, you need to specify
+    "enable_charts" in the config or set the "PASTE_ENABLE_CHARTS"
+    environment variable:
+
+      $ PASTE_ENABLE_CHARTS=1 script/mojopaste daemon;
+
+    The input chart data can be given as JSON or CSV:
+
+    *   Raw morris.js arguments
+
+        Example:
+
+          {
+            "data": [
+              { "x": "2015-02-04 15:03", "a": 120, "b": 90 },
+              { "x": "2015-03-14", "a": 75, "b": 65 },
+              { "x": "2015-04", "a": 100, "b": 40 }
+            ],
+            "xkey": "x",
+            "ykeys": ["a", "b"],
+            "labels": ["Series A", "Series B"]
+          }
+
+        "xkey" default to "x". "ykeys" default to the rest of the keys in
+        the first element in "data", excluding xkey. "labels" default to
+        "ykeys".
+
+        See <http://morrisjs.github.io/morris.js/lines.html> for more
+        details.
+
+        Note that by installing JSON.pm the input format can be less strict,
+        allowing JavaScript notation instead of strict JSON.
+
+    *   Just data
+
+          [
+            // comments are allowed
+            # both "#" and "//" can be used anywhere, but on a line by itself
+            { "x": "2015-02-04 15:03", "a": 120, "b": 90 },
+            { "x": "2015-03-14", "a": 75, "b": 65 },
+            { "x": "2015-04", "a": 100, "b": 40 }
+          ]
+
+        This input format takes just an JSON array and will use that as
+        "data". The rest will use the default value rules from above.
+
+    *   CSV data
+
+        CSV data is similar to "Just data" above, except the first line is
+        used as "xkey,ykey1,ykey2,...". Example:
+
+          # Can have comments in CSV input as well
+          x,a,b
+          2015-02-04 15:03,120,90
+          2015-03-14,75,65
+          2015-04,100,40
+
+        CSV input data require Text::CSV to be installed.
 
 DEMO
     You can try mojopaste here: <http://p.thorsen.pm>.
@@ -38,9 +106,9 @@ SYNOPSIS
         Example mojopaste.conf:
 
           {
-            paste_dir       => '/path/to/paste/dir',
-            allow_robots    => 1, # default is 0
-            enable_plotting => 1, # default is 0
+            paste_dir     => '/path/to/paste/dir',
+            allow_robots  => 1, # default is 0
+            enable_charts => 1, # default is 0
             hypnotoad => {
               listen => ['http://*:8080'],
             },
@@ -49,8 +117,8 @@ SYNOPSIS
         "allow_robots" will disable javascript requirements and allow simple
         scripts (robots) to use the pastebin without much knowledge.
 
-        "enable_plotting" is for allowing a button to graph input data using
-        morris.js <http://morrisjs.github.io/morris.js>
+        "enable_charts" is for adding a button which can make a chart of the
+        input data using morris.js <http://morrisjs.github.io/morris.js>
 
         Check out Mojo::Server::Hypnotoad for more hypnotoad options.
 
