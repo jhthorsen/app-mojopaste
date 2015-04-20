@@ -13,7 +13,7 @@ my $enable_charts = app->config('enable_charts') || $ENV{PASTE_ENABLE_CHARTS};
 
 get '/' => sub {
   my $self = shift;
-  my $paste_id = $self->param('edit') or return;
+  my $paste_id = _scrub_id($self->param('edit')) or return;
   $self->param(content => decode "UTF-8", slurp "$paste_dir/$paste_id");
 }, 'pastebin';
 
@@ -37,7 +37,7 @@ post '/' => sub {
 
 get '/:paste_id', sub {
   my $self = shift;
-  my $paste_id = $self->stash('paste_id');
+  my $paste_id = _scrub_id($self->stash('paste_id'));
   my $format = $self->stash('format') || '';
   my $file = Mojo::Asset::File->new(path => "$paste_dir/$paste_id");
 
@@ -56,7 +56,7 @@ get '/:paste_id', sub {
 
 $enable_charts and get '/:paste_id/chart', sub {
   my $c        = shift;
-  my $paste_id = $c->stash('paste_id');
+  my $paste_id = _scrub_id($c->stash('paste_id'));
   my @lines    = grep { ! m!^\s*(?://|\#)! and $_ =~ /\S/ } split /\r?\n/, Mojo::Asset::File->new(path => "$paste_dir/$paste_id")->slurp;
   my $chart    = {data => []};
 
@@ -95,6 +95,11 @@ $enable_charts and get '/:paste_id/chart', sub {
 
 app->defaults(title => 'Mojopaste', layout => 'default', allow_robots => $allow_robots, enable_charts => $enable_charts);
 app->start;
+
+sub _scrub_id {
+  ( my $id = shift ) =~ s/[^[:xdigit:]]+//g;
+  return $id;
+}
 
 __DATA__
 @@ layouts/default.html.ep
