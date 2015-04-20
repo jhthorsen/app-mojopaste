@@ -1,6 +1,6 @@
 Revision history for perl distribution App-mojopaste
 
-0.13 Not Released
+0.13 2015-04-20T16:54:30+0200
  - SECURITY FIX! Cannot read ../../private/file #6
  - Capture chart errors
  - Will construct default ykeys from all chart elements
