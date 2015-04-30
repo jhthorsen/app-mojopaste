@@ -42,7 +42,7 @@ get '/:paste_id', sub {
   my $file = Mojo::Asset::File->new(path => "$paste_dir/$paste_id");
 
   if(!$file->size) {
-    $self->render('pastebin', file => undef, title => 'Could not find paste', status => 404);
+    $self->render(content => "Could not find paste '$paste_id'.", title => 'Could not find paste', status => 404);
   }
   elsif($self->param('raw') or $format eq 'txt') {
     $self->res->headers->content_type('text/plain; charset=utf-8');
