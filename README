@@ -2,7 +2,7 @@ NAME
     App::mojopaste - Pastebin application
 
 VERSION
-    0.14
+    0.15
 
 DESCRIPTION
     Mojopaste is a pastebin application. There's about one million of these

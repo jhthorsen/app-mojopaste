@@ -22,5 +22,5 @@ WriteMakefile(
   'Mojolicious' => '5.00'
 }
 ,
-  test => { TESTS => 't/*.t' },
+  test => {TESTS => (-e 'META.yml' ? 't/*.t' : 't/*.t xt/*.t')},
 );

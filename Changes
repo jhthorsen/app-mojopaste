@@ -1,6 +1,6 @@
 Revision history for perl distribution App-mojopaste
 
-0.15 Not Released
+0.15 2015-04-30T10:17:13+0200
  - Change "Powered by" URL
  - Change styling for .morris-hover
  - Change 404 page to show that the paste could not be found.
