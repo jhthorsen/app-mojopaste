@@ -25,6 +25,13 @@ $t->get_ok("/$file")->status_is(200)->element_exists(qq(a[href\$="/chart"]));
 
 $t->get_ok("/NOT_EXISTENT/chart")->status_is(404);
 
+open(my $emptyfile, ">", "$ENV{PASTE_DIR}/EMPTY");
+close($emptyfile);
+
+$t->get_ok("/EMPTY/chart")->status_is(404);
+
+unlink "$ENV{PASTE_DIR}/EMPTY";
+
 $t->get_ok("/$file/chart")->status_is(200)
   ->content_like(qr{jquery\.min\.js})
   ->content_like(qr{morris\.css})

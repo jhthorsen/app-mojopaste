@@ -42,6 +42,7 @@ $t->get_ok($t->tx->res->headers->location)
   ->text_is('pre', $content)
   ;
 
+
 # $ENV{PASTE_ENABLE_CHARTS} is not set
 $t->get_ok("/$files[0]/chart")->status_is(404);
 
@@ -51,6 +52,14 @@ $content =~ s/\n$//;
 $t->get_ok("/?edit=$files[0]")->text_is('textarea', "$content\n");
 
 $t->get_ok("/?edit=NOT_EXISTENT")->status_is(404);
+
+open(my $emptyfile, ">", "$ENV{PASTE_DIR}/EMPTY");
+close($emptyfile);
+
+$t->get_ok("/EMPTY")->status_is(404);
+$t->get_ok("/?edit=EMPTY")->status_is(404);
+
+unlink "$ENV{PASTE_DIR}/EMPTY";
 
 unlink "$ENV{PASTE_DIR}/$_" for @files;
 
