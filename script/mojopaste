@@ -14,7 +14,9 @@ my $enable_charts = app->config('enable_charts') || $ENV{PASTE_ENABLE_CHARTS};
 get '/' => sub {
   my $self = shift;
   my $paste_id = _paste_id($self->param('edit')) or return;
-  $self->param(content => decode "UTF-8", slurp "$paste_dir/$paste_id") if -e "$paste_dir/$paste_id";
+  my $paste = "$paste_dir/$paste_id";
+  $self->render(content => "Could not find paste '$paste_id'.", title => 'Could not find paste', status => 404) unless -r $paste;  
+  return $self->render(content => decode "UTF-8", slurp $paste);
 }, 'pastebin';
 
 post '/' => sub {
