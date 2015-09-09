@@ -50,6 +50,8 @@ $t->get_ok("/$files[0].txt")->content_is($content);
 $content =~ s/\n$//;
 $t->get_ok("/?edit=$files[0]")->text_is('textarea', "$content\n");
 
+$t->get_ok("/?edit=NOT_EXISTENT")->status_is(404);
+
 unlink "$ENV{PASTE_DIR}/$_" for @files;
 
 done_testing;
