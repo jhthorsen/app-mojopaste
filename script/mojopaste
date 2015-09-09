@@ -2,6 +2,7 @@
 use Mojolicious::Lite;
 use Mojo::Util qw( encode decode spurt slurp );
 use File::Path ();
+use File::Spec ();
 use constant HUMAN_JSON => eval 'require JSON;JSON->new->utf8(1)->relaxed(1)->allow_barekey(1)' || 0;
 
 plugin 'config' if $ENV{MOJO_CONFIG};
@@ -14,7 +15,9 @@ my $enable_charts = app->config('enable_charts') || $ENV{PASTE_ENABLE_CHARTS};
 get '/' => sub {
   my $self = shift;
   my $paste_id = _paste_id($self->param('edit')) or return;
-  $self->param(content => decode "UTF-8", slurp "$paste_dir/$paste_id");
+  my $paste = File::Spec->catfile("$paste_dir", "$paste_id");
+  return $self->render(template => 'show', content => "Could not find paste '$paste_id'.", paste_id => $paste_id, title => 'Could not find paste', status => 404) unless -r $paste and -s $paste;  
+  $self->param(content => decode "UTF-8", slurp $paste)
 }, 'pastebin';
 
 post '/' => sub {
@@ -28,10 +31,10 @@ post '/' => sub {
   }
 
   do {
-    $paste_id = substr Mojo::Util::md5_sum($$.time.rand), 0, 12;
-  } while -e "$paste_dir/$paste_id";
+    $paste_id = substr Mojo::Util::sha1_sum($$.time.rand), 0, 12;
+  } while -e File::Spec->catfile("$paste_dir", "$paste_id");
 
-  spurt encode("UTF-8", $content), "$paste_dir/$paste_id";
+  spurt encode("UTF-8", $content), File::Spec->catfile("$paste_dir", "$paste_id");
   $self->redirect_to('show', paste_id => $paste_id);
 };
 
@@ -39,7 +42,7 @@ get '/:paste_id', sub {
   my $self = shift;
   my $paste_id = _paste_id($self->stash('paste_id'));
   my $format = $self->stash('format') || '';
-  my $file = Mojo::Asset::File->new(path => "$paste_dir/$paste_id");
+  my $file = Mojo::Asset::File->new(path => File::Spec->catfile("$paste_dir", "$paste_id"));
 
   if(!$file->size) {
     $self->render(content => "Could not find paste '$paste_id'.", title => 'Could not find paste', status => 404);
@@ -55,9 +58,13 @@ get '/:paste_id', sub {
 }, 'show';
 
 $enable_charts and get '/:paste_id/chart', sub {
-  my $c        = shift;
-  my $paste_id = _paste_id($c->stash('paste_id'));
-  my @lines    = grep { ! m!^\s*(?://|\#)! and $_ =~ /\S/ } split /\r?\n/, Mojo::Asset::File->new(path => "$paste_dir/$paste_id")->slurp;
+  my $self        = shift;
+  my $paste_id = _paste_id($self->stash('paste_id'));
+  my $paste = File::Spec->catfile("$paste_dir", "$paste_id");
+
+  return $self->render(template => 'show', content => "Could not find paste '$paste_id'.", paste_id => $paste_id, title => 'Could not find paste', status => 404) unless -r $paste and -s $paste;
+
+  my @lines    = grep { ! m!^\s*(?://|\#)! and $_ =~ /\S/ } split /\r?\n/, Mojo::Asset::File->new(path => $paste)->slurp;
   my $chart    = {data => []};
   my $error;
 
@@ -68,18 +75,18 @@ $enable_charts and get '/:paste_id/chart', sub {
     eval {
       $chart->{data} = HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines");
     } or do {
-      $c->app->log->warn($error = "Could not parse chart data: $@");
+      $self->app->log->warn($error = "Could not parse chart data: $@");
     };
   }
   elsif ($lines[0] =~ /^\s*\{/s) {    # morris arguments
     eval {
       $chart = HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines");
     } or do {
-      $c->app->log->warn($error = "Could not parse chart arguments: $@");
+      $self->app->log->warn($error = "Could not parse chart arguments: $@");
     };
   }
   else {                      # csv
-    eval 'require Text::CSV;1' or return $c->render(text => 'Text::CSV is required.');
+    eval 'require Text::CSV;1' or return $self->render(text => 'Text::CSV is required.');
     my $csv = Text::CSV->new;
 
     $csv->parse(shift @lines);    # heading
@@ -88,7 +95,7 @@ $enable_charts and get '/:paste_id/chart', sub {
 
     while (@lines) {
       unless ($csv->parse(shift @lines)) {
-        $c->app->log->warn($error = "Could not parse CSV data: " .$csv->error_input);
+        $self->app->log->warn($error = "Could not parse CSV data: " .$csv->error_input);
         last;
       }
       my @row = $csv->fields or next;
@@ -103,7 +110,7 @@ $enable_charts and get '/:paste_id/chart', sub {
   $chart->{labels} ||= $chart->{ykeys};
 
   $error =~ s!at .*? line \d+$!! if $error;
-  $c->render(chart => $chart, error => $error);
+  $self->render(chart => $chart, error => $error);
 }, 'chart';
 
 app->defaults(title => 'Mojopaste', layout => 'default', allow_robots => $allow_robots, enable_charts => $enable_charts);
@@ -244,7 +251,7 @@ window.addEventListener('load', function(e) {
 <nav>
   %= link_to 'Raw', url_for('show', paste_id => $paste_id, format => 'txt'), class => 'btn first'
   %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id), class => 'btn'
-  %= link_to 'Graph', url_for('chart'), class => 'btn' if $enable_charts
+  %= link_to 'Graph', url_for('chart', paste_id => $paste_id), class => 'btn' if $enable_charts
   %= link_to 'New', 'pastebin', class => 'btn'
   %= include 'powered_by'
 </nav>
