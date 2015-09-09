@@ -16,7 +16,7 @@ get '/' => sub {
   my $paste_id = _paste_id($self->param('edit')) or return;
   my $paste = "$paste_dir/$paste_id";
   return $self->render(content => "Could not find paste '$paste_id'.", title => 'Could not find paste', status => 404) unless -r $paste;  
-  return $self->render(content => decode "UTF-8", slurp $paste);
+  $self->param(content => decode "UTF-8", slurp $paste)
 }, 'pastebin';
 
 post '/' => sub {
