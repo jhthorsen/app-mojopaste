@@ -58,11 +58,11 @@ get '/:paste_id', sub {
 }, 'show';
 
 $enable_charts and get '/:paste_id/chart', sub {
-  my $c        = shift;
-  my $paste_id = _paste_id($c->stash('paste_id'));
+  my $self        = shift;
+  my $paste_id = _paste_id($self->stash('paste_id'));
   my $paste = File::Spec->catfile("$paste_dir", "$paste_id");
 
-  return $c->render(template => "pastebin", content => "Could not find paste '$paste_id'.", title => 'Could not find paste', status => 404) unless $paste_id and -r $paste and -s $paste;
+  return $self->render(template => "pastebin", content => "Could not find paste '$paste_id'.", title => 'Could not find paste', status => 404) unless $paste_id and -r $paste and -s $paste;
 
   my @lines    = grep { ! m!^\s*(?://|\#)! and $_ =~ /\S/ } split /\r?\n/, Mojo::Asset::File->new(path => $paste)->slurp;
   my $chart    = {data => []};
@@ -75,18 +75,18 @@ $enable_charts and get '/:paste_id/chart', sub {
     eval {
       $chart->{data} = HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines");
     } or do {
-      $c->app->log->warn($error = "Could not parse chart data: $@");
+      $self->app->log->warn($error = "Could not parse chart data: $@");
     };
   }
   elsif ($lines[0] =~ /^\s*\{/s) {    # morris arguments
     eval {
       $chart = HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines");
     } or do {
-      $c->app->log->warn($error = "Could not parse chart arguments: $@");
+      $self->app->log->warn($error = "Could not parse chart arguments: $@");
     };
   }
   else {                      # csv
-    eval 'require Text::CSV;1' or return $c->render(text => 'Text::CSV is required.');
+    eval 'require Text::CSV;1' or return $self->render(text => 'Text::CSV is required.');
     my $csv = Text::CSV->new;
 
     $csv->parse(shift @lines);    # heading
@@ -95,7 +95,7 @@ $enable_charts and get '/:paste_id/chart', sub {
 
     while (@lines) {
       unless ($csv->parse(shift @lines)) {
-        $c->app->log->warn($error = "Could not parse CSV data: " .$csv->error_input);
+        $self->app->log->warn($error = "Could not parse CSV data: " .$csv->error_input);
         last;
       }
       my @row = $csv->fields or next;
@@ -110,7 +110,7 @@ $enable_charts and get '/:paste_id/chart', sub {
   $chart->{labels} ||= $chart->{ykeys};
 
   $error =~ s!at .*? line \d+$!! if $error;
-  $c->render(chart => $chart, error => $error);
+  $self->render(chart => $chart, error => $error);
 }, 'chart';
 
 app->defaults(title => 'Mojopaste', layout => 'default', allow_robots => $allow_robots, enable_charts => $enable_charts);
