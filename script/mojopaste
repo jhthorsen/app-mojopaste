@@ -31,7 +31,7 @@ post '/' => sub {
   }
 
   do {
-    $paste_id = substr Mojo::Util::md5_sum($$.time.rand), 0, 12;
+    $paste_id = substr Mojo::Util::sha1_sum($$.time.rand), 0, 12;
   } while -e File::Spec->catfile("$paste_dir", "$paste_id");
 
   spurt encode("UTF-8", $content), File::Spec->catfile("$paste_dir", "$paste_id");
