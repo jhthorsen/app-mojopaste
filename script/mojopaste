@@ -14,7 +14,7 @@ my $enable_charts = app->config('enable_charts') || $ENV{PASTE_ENABLE_CHARTS};
 get '/' => sub {
   my $self = shift;
   my $paste_id = _paste_id($self->param('edit')) or return;
-  $self->param(content => decode "UTF-8", slurp "$paste_dir/$paste_id");
+  $self->param(content => decode "UTF-8", slurp "$paste_dir/$paste_id") if -e "$paste_dir/$paste_id";
 }, 'pastebin';
 
 post '/' => sub {
