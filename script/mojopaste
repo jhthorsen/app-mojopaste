@@ -60,7 +60,11 @@ get '/:paste_id', sub {
 $enable_charts and get '/:paste_id/chart', sub {
   my $c        = shift;
   my $paste_id = _paste_id($c->stash('paste_id'));
-  my @lines    = grep { ! m!^\s*(?://|\#)! and $_ =~ /\S/ } split /\r?\n/, Mojo::Asset::File->new(path => File::Spec->catfile("$paste_dir", "$paste_id"))->slurp;
+  my $paste = File::Spec->catfile("$paste_dir", "$paste_id");
+
+  return $c->render(template => "pastebin", content => "Could not find paste '$paste_id'.", title => 'Could not find paste', status => 404) unless $paste_id and -r $paste and -s $paste;
+
+  my @lines    = grep { ! m!^\s*(?://|\#)! and $_ =~ /\S/ } split /\r?\n/, Mojo::Asset::File->new(path => $paste)->slurp;
   my $chart    = {data => []};
   my $error;
 
