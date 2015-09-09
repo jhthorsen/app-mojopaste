@@ -16,7 +16,7 @@ get '/' => sub {
   my $self = shift;
   my $paste_id = _paste_id($self->param('edit')) or return;
   my $paste = File::Spec->catfile("$paste_dir", "$paste_id");
-  return $self->render(content => "Could not find paste '$paste_id'.", title => 'Could not find paste', status => 404) unless -r $paste and -s $paste;  
+  return $self->render(template => 'show', content => "Could not find paste '$paste_id'.", paste_id => $paste_id, title => 'Could not find paste', status => 404) unless -r $paste and -s $paste;  
   $self->param(content => decode "UTF-8", slurp $paste)
 }, 'pastebin';
 
@@ -62,7 +62,7 @@ $enable_charts and get '/:paste_id/chart', sub {
   my $paste_id = _paste_id($self->stash('paste_id'));
   my $paste = File::Spec->catfile("$paste_dir", "$paste_id");
 
-  return $self->redirect_to('show', paste_id => $paste_id) unless -r $paste and -s $paste;
+  return $self->render(template => 'show', content => "Could not find paste '$paste_id'.", paste_id => $paste_id, title => 'Could not find paste', status => 404) unless -r $paste and -s $paste;
 
   my @lines    = grep { ! m!^\s*(?://|\#)! and $_ =~ /\S/ } split /\r?\n/, Mojo::Asset::File->new(path => $paste)->slurp;
   my $chart    = {data => []};
