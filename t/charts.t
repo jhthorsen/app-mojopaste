@@ -23,12 +23,18 @@ $t->post_ok('/', form => { content => $content, p => 1 })->status_is(302);
 $file = $t->tx->res->headers->location =~ m!/(\w+)$! ? $1 : 'nope';
 $t->get_ok("/$file")->status_is(200)->element_exists(qq(a[href\$="/chart"]));
 
+$t->get_ok("/NOT_EXISTENT/chart")->status_is(302);
+$t->ua->max_redirects(1);
 $t->get_ok("/NOT_EXISTENT/chart")->status_is(404);
+$t->ua->max_redirects(0);
 
 open(my $emptyfile, ">", "$ENV{PASTE_DIR}/EMPTY");
 close($emptyfile);
 
+$t->get_ok("/EMPTY/chart")->status_is(302);
+$t->ua->max_redirects(1);
 $t->get_ok("/EMPTY/chart")->status_is(404);
+$t->ua->max_redirects(0);
 
 unlink "$ENV{PASTE_DIR}/EMPTY";
 
