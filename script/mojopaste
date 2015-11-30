@@ -8,110 +8,130 @@ plugin 'config' if $ENV{MOJO_CONFIG};
 
 app->defaults(allow_robots  => app->config('allow_robots')  // $ENV{PASTE_ALLOW_ROBOTS});
 app->defaults(enable_charts => app->config('enable_charts') // $ENV{PASTE_ENABLE_CHARTS});
-app->defaults(title => 'Mojopaste', layout => 'default');
+app->defaults(title         => 'Mojopaste');
 
+my $ID = 0;
 my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || '/tmp/mojopaste';
 -d $paste_dir or File::Path::mkpath($paste_dir) or die "mkpath $paste_dir: $!";
 
-get '/' => sub {
+helper paste => sub {
+  my $cb = pop;
+  my $c  = shift;
+  my $id = shift // $c->stash('paste_id');
+
+  return $c->$cb("Hacking attempt: $id", "") if $id =~ m!\W!;
+  return $c->$cb($!, eval { decode "UTF-8", slurp "$paste_dir/$id" }) unless @_;
+  spurt encode("UTF-8", $_[0]), "$paste_dir/$id";
+  $c->$cb("");
+};
+
+get '/' => {layout => 'mojopaste'} => sub {
   my $c = shift;
-  my $paste_id = $c->paste_id($c->param('edit')) or return;
-  $c->param(content => decode "UTF-8", slurp "$paste_dir/$paste_id");
+  my $id = $c->param('edit') or return;
+  $c->delay(
+    sub { $c->paste($id, shift->begin) },
+    sub {
+      my ($delay, $err, $paste) = @_;
+      die $err if $err;
+      $c->param(content => $paste)->render;
+    },
+  );
   },
   'pastebin';
 
 post '/' => sub {
   my $c = shift;
-  my ($content, $paste_id);
+  my $content = $c->param('content') || '';
+  return $c->render('pastebin', status => 400) unless $content =~ /\w/;
 
-  $content = $c->param('content') || '';
-
-  unless ($content =~ /\w/) {
-    return $c->render('pastebin', status => 400);
-  }
-
-  do {
-    $paste_id = substr Mojo::Util::md5_sum($$ . time . rand), 0, 12;
-  } while -e "$paste_dir/$paste_id";
-
-  spurt encode("UTF-8", $content), "$paste_dir/$paste_id";
-  $c->redirect_to('show', paste_id => $paste_id);
+  my $id = substr Mojo::Util::md5_sum($$ . time . $ID++), 0, 12;
+  $c->delay(
+    sub { $c->paste($id, $content, shift->begin) },
+    sub {
+      my ($delay, $err) = @_;
+      die $err if $err;
+      $c->redirect_to('show', paste_id => $id);
+    },
+  );
 };
 
 get '/:paste_id', sub {
-  my $c        = shift;
-  my $paste_id = $c->paste_id;
-  my $format   = $c->stash('format') || '';
-  my $file     = Mojo::Asset::File->new(path => "$paste_dir/$paste_id");
+  my $c = shift;
+  my $format = $c->stash('format') || '';
 
-  if (!$file->size) {
-    $c->render(content => "Could not find paste '$paste_id'.", title => 'Could not find paste', status => 404);
-  }
-  elsif ($c->param('raw') or $format eq 'txt') {
-    $c->res->headers->content_type('text/plain; charset=utf-8');
-    $c->res->content->asset($file);
-    $c->rendered(200);
-  }
-  else {
-    $c->render(content => decode "UTF-8", $file->slurp);
-  }
+  $c->delay(
+    sub { $c->paste(undef, shift->begin) },
+    sub {
+      my ($delay, $err, $paste) = @_;
+      return $c->render(
+        layout  => 'mojopaste',
+        content => 'Could not find paste.',
+        title   => 'Could not find paste',
+        status  => 404
+      ) if $err;
+      return $c->render(layout => 'mojopaste', content => $paste) if !$c->param('raw') and $format ne 'txt';
+      $c->res->headers->content_type('text/plain; charset=utf-8');
+      $c->render(text => $paste);
+    },
+  );
 }, 'show';
 
-get '/:paste_id/chart', sub {
-  my $c        = shift;
-  my $paste_id = $c->paste_id;
-  my @lines    = grep { !m!^\s*(?://|\#)! and $_ =~ /\S/ } split /\r?\n/,
-    Mojo::Asset::File->new(path => "$paste_dir/$paste_id")->slurp;
-  my $chart = {data => []};
-  my $error;
-
-  if (!@lines) {
-    1;    # nothing in, nothing out
-  }
-  elsif ($lines[0] =~ /^\s*\[/s) {    # morris data
-    eval { $chart->{data} = HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines"); } or do {
-      $c->app->log->warn($error = "Could not parse chart data: $@");
-    };
-  }
-  elsif ($lines[0] =~ /^\s*\{/s) {    # morris arguments
-    eval { $chart = HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines"); } or do {
-      $c->app->log->warn($error = "Could not parse chart arguments: $@");
-    };
-  }
-  else {                              # csv
-    eval 'require Text::CSV;1' or return $c->render(text => 'Text::CSV is required.');
-    my $csv = Text::CSV->new;
-
-    $csv->parse(shift @lines);        # heading
-    $chart->{ykeys} = [$csv->fields];
-    $chart->{xkey}  = shift @{$chart->{ykeys}};
-
-    while (@lines) {
-      unless ($csv->parse(shift @lines)) {
-        $c->app->log->warn($error = "Could not parse CSV data: " . $csv->error_input);
-        last;
-      }
-      my @row = $csv->fields or next;
-      push @{$chart->{data}}, {$chart->{xkey} => shift(@row), map { ($_ => 0 + shift @row) } @{$chart->{ykeys}}};
-    }
-  }
-
-  $chart->{element} = 'chart';
-  $chart->{resize}  = \1;
-  $chart->{xkey}   ||= 'x';
-  $chart->{ykeys}  ||= _cols($chart->{xkey}, $chart->{data});
-  $chart->{labels} ||= $chart->{ykeys};
-
-  $error =~ s!at .*? line \d+$!! if $error;
-  $c->render(chart => $chart, error => $error);
-}, 'chart' if app->defaults('enable_charts');
-
-helper paste_id => sub {
+get
+  '/:paste_id/chart' => {layout => 'mojopaste'},
+  sub {
   my $c = shift;
-  my $id = shift // $c->stash('paste_id');
-  die "Hacking attempt: $id" if $id and $id =~ m!\W!;
-  return $id;
-};
+
+  $c->delay(
+    sub { $c->paste(undef, shift->begin) },
+    sub {
+      my ($delay, $err, $paste) = @_;
+      return $c->render(content => 'Could not find paste.', title => 'Could not find paste', status => 404) if $err;
+
+      my @lines = grep { !m!^\s*(?://|\#)! and $_ =~ /\S/ } split /\r?\n/, $paste;
+      my $chart = {data => [], element => 'chart', resize => Mojo::JSON->true};
+      my $error;
+
+      if (!@lines) {
+        1;    # nothing in, nothing out
+      }
+      elsif ($lines[0] =~ /^\s*\[/s) {    # morris data
+        eval { $chart->{data} = HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines"); }
+          or do {
+          $c->app->log->warn($error = "Could not parse chart data: $@");
+          };
+      }
+      elsif ($lines[0] =~ /^\s*\{/s) {    # morris arguments
+        eval { $chart = HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines"); } or do {
+          $c->app->log->warn($error = "Could not parse chart arguments: $@");
+        };
+      }
+      else {                              # csv
+        eval 'require Text::CSV;1' or return $c->render(text => 'Text::CSV is required.');
+        my $csv = Text::CSV->new;
+
+        $csv->parse(shift @lines);        # heading
+        $chart->{ykeys} = [$csv->fields];
+        $chart->{xkey}  = shift @{$chart->{ykeys}};
+
+        while (@lines) {
+          unless ($csv->parse(shift @lines)) {
+            $c->app->log->warn($error = "Could not parse CSV data: " . $csv->error_input);
+            last;
+          }
+          my @row = $csv->fields or next;
+          push @{$chart->{data}}, {$chart->{xkey} => shift(@row), map { ($_ => 0 + shift @row) } @{$chart->{ykeys}}};
+        }
+      }
+
+      $chart->{xkey}   ||= 'x';
+      $chart->{ykeys}  ||= _cols($chart->{xkey}, $chart->{data});
+      $chart->{labels} ||= $chart->{ykeys};
+
+      $error =~ s!at .*? line \d+$!! if $error;
+      $c->render(chart => $chart, error => $error);
+    }
+  );
+  }, 'chart' if app->defaults('enable_charts');
 
 app->start;
 
@@ -128,7 +148,7 @@ sub _cols {
 }
 
 __DATA__
-@@ layouts/default.html.ep
+@@ layouts/mojopaste.html.ep
 <!DOCTYPE>
 <html>
 <head>
