@@ -2,7 +2,7 @@
 use Mojolicious::Lite;
 use Mojo::Util qw( encode decode spurt slurp );
 use File::Path ();
-use constant HUMAN_JSON => eval 'require JSON;JSON->new->utf8(1)->relaxed(1)->allow_barekey(1)' || 0;
+use constant HUMAN_JSON => eval 'require JSON::Syck;JSON::Syck->new->utf8(1)->relaxed(1)->allow_barekey(1)' || 0;
 
 plugin 'config' if $ENV{MOJO_CONFIG};
 
