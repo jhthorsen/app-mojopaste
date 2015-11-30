@@ -114,6 +114,13 @@ Don't have cpanm installed?
 
   $ PASTE_DIR=/path/to/paste/dir mojopaste daemon --listen http://*:8080
 
+=item * Save to database
+
+  $ PASTE_DB_URL=postgresql://postgres@localhost/db_name mojopaste daemon
+
+"db_name" database need to exist, but C<mojopaste> will automatically
+create the required tables.
+
 =item * Using the UNIX optimized, preforking hypnotoad web server
 
   $ MOJO_CONFIG=/path/to/mojopaste.conf hypnotoad $(which mojopaste)
