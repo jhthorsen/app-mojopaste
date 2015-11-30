@@ -1,0 +1,15 @@
+language: perl
+sudo: false
+services:
+  - mysql
+perl:
+  - "5.20"
+  - "5.16"
+  - "5.10"
+env:
+  - "HARNESS_OPTIONS=j1 TEST_POD=1 TEST_DATABASE=mysql://root@127.0.0.1/test"
+install:
+  - "cpanm -n Test::Pod Test::Pod::Coverage DBIx::TempDB Mojo::mysql"
+  - "cpanm -n --installdeps ."
+notifications:
+  email: false
