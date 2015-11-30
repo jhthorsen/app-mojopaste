@@ -33,7 +33,7 @@ get '/' => {layout => 'mojopaste'} => sub {
     sub {
       my ($delay, $err, $paste) = @_;
       die $err if $err;
-      $c->param(content => $paste)->render;
+      $c->param(paste => $paste)->render;
     },
   );
   },
@@ -41,12 +41,12 @@ get '/' => {layout => 'mojopaste'} => sub {
 
 post '/' => sub {
   my $c = shift;
-  my $content = $c->param('content') || '';
-  return $c->render('pastebin', status => 400) unless $content =~ /\w/;
+  my $paste = $c->param('paste') || '';
+  return $c->render('pastebin', status => 400) unless $paste =~ /\w/;
 
   my $id = substr Mojo::Util::md5_sum($$ . time . $ID++), 0, 12;
   $c->delay(
-    sub { $c->paste($id, $content, shift->begin) },
+    sub { $c->paste($id, $paste, shift->begin) },
     sub {
       my ($delay, $err) = @_;
       die $err if $err;
@@ -64,12 +64,12 @@ get '/:paste_id', sub {
     sub {
       my ($delay, $err, $paste) = @_;
       return $c->render(
-        layout  => 'mojopaste',
-        content => 'Could not find paste.',
-        title   => 'Could not find paste',
-        status  => 404
+        layout => 'mojopaste',
+        paste  => 'Could not find paste.',
+        title  => 'Could not find paste',
+        status => 404
       ) if $err;
-      return $c->render(layout => 'mojopaste', content => $paste) if !$c->param('raw') and $format ne 'txt';
+      return $c->render(layout => 'mojopaste', paste => $paste) if !$c->param('raw') and $format ne 'txt';
       $c->res->headers->content_type('text/plain; charset=utf-8');
       $c->render(text => $paste);
     },
@@ -85,7 +85,7 @@ get
     sub { $c->paste(undef, shift->begin) },
     sub {
       my ($delay, $err, $paste) = @_;
-      return $c->render(content => 'Could not find paste.', title => 'Could not find paste', status => 404) if $err;
+      return $c->render(paste => 'Could not find paste.', title => 'Could not find paste', status => 404) if $err;
 
       my @lines = grep { !m!^\s*(?://|\#)! and $_ =~ /\S/ } split /\r?\n/, $paste;
       my $chart = {data => [], element => 'chart', resize => Mojo::JSON->true};
@@ -233,7 +233,7 @@ __DATA__
   <button class="btn first" tabindex="2">Paste</button>
   %= include 'powered_by'
 </nav>
-%= text_area 'content', placeholder => 'Enter your text here and then press the Paste button.', tabindex => 1
+%= text_area 'paste', placeholder => 'Enter your text here and then press the Paste button.', tabindex => 1
 % end
 @@ chart.html.ep
 <nav>
@@ -269,6 +269,6 @@ window.addEventListener('load', function(e) {
   %= link_to 'New', 'pastebin', class => 'btn'
   %= include 'powered_by'
 </nav>
-<pre class="prettyprint"><%= $content %></pre>
+<pre class="prettyprint"><%= $paste %></pre>
 @@ powered_by.html.ep
 <span class="powered-by">Powered by <a href="https://metacpan.org/pod/App::mojopaste#DESCRIPTION" title="Get mojopaste">Mojopaste</a></span>
