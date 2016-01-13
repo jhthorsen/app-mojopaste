@@ -7,6 +7,7 @@ $t->get_ok('/')->status_is(200)->element_exists('form[method="post"][action="inv
   ->element_exists('button')->element_exists('a[href="https://metacpan.org/pod/App::mojopaste#DESCRIPTION"]');
 
 $t->post_ok('/')->status_is(400)->element_exists('form[method="post"][action="invalid"]');
+$t->post_ok('/', form => {paste => '', p => 1})->status_is(400, 'Need at least one character');
 
 $t->post_ok('/', form => {paste => $raw, p => 1})->status_is(302)->header_like('Location', qr[^/\w{12}$]);
 

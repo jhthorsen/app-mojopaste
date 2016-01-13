@@ -1,6 +1,7 @@
 Revision history for perl distribution App-mojopaste
 
 0.17 Not Released
+ - Cannot make empty paste
  - Non-existing paste will result in 404 instead of 500 #8
    Contributor: Stephan Jauernick
  - Use File::Spec to construct correct paths on all OS #8

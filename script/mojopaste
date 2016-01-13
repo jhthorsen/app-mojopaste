@@ -49,8 +49,8 @@ get '/' => {layout => 'mojopaste'} => sub {
 post '/' => sub {
   my $c = shift;
   my $paste = $c->param('paste') || '';
-  return $c->render('pastebin', status => 400) unless $paste =~ /\w/;
 
+  return $c->render('pastebin', status => 400) unless $paste =~ /\w/;
   my $id = substr Mojo::Util::md5_sum($$ . time . $ID++), 0, 12;
   $c->delay(
     sub { $c->paste($id, $paste, shift->begin) },
