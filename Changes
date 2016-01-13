@@ -1,7 +1,6 @@
 Revision history for perl distribution App-mojopaste
 
 0.16 Not Released
- - Can store/retrieve paste from database
  - Recommends JSON::Syck
  - Recommends Text::CSV
  - No need to encode/decode UTF-8 anymore
