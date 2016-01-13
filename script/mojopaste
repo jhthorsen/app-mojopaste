@@ -20,7 +20,7 @@ if (my $url = app->config('db_url') || $ENV{PASTE_DB_URL}) {
     my $cb    = pop;
     my $c     = shift;
     my $id    = shift // $c->stash('paste_id');
-    my $paste = @_ ? encode 'UTF-8', shift : undef;
+    my $paste = @_ ? shift : undef;
     my $db    = $dbc->db;
 
     $c->stash(db => $db)->delay(
@@ -33,7 +33,7 @@ if (my $url = app->config('db_url') || $ENV{PASTE_DB_URL}) {
       sub {
         my ($delay, $err, $res) = @_;
         return $c->$cb($err) if $paste;
-        return $c->$cb($err, decode 'UTF-8', $res->array->[0]);
+        return $c->$cb($err, $res->array->[0]);
       }
     );
   };

@@ -4,6 +4,7 @@ Revision history for perl distribution App-mojopaste
  - Can store/retrieve paste from database
  - Recommends JSON::Syck
  - Recommends Text::CSV
+ - No need to encode/decode UTF-8 anymore
 
 0.15 2015-04-30T10:17:13+0200
  - Change "Powered by" URL
