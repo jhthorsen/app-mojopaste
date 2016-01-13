@@ -1,6 +1,6 @@
 Revision history for perl distribution App-mojopaste
 
-0.16 Not Released
+0.16 2016-01-13T09:25:51+0100
  - Recommends JSON::Syck
  - Recommends Text::CSV
  - No need to encode/decode UTF-8 anymore
