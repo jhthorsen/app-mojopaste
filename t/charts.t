@@ -1,15 +1,7 @@
-use warnings;
-use strict;
-use Test::More;
-use Test::Mojo;
-use Cwd ();
+BEGIN { $ENV{PASTE_ENABLE_CHARTS} = 1 }
+use t::Helper;
 
-$ENV{PASTE_DIR}           = 't/paste';
-$ENV{PASTE_ENABLE_CHARTS} = 1;
-
-plan skip_all => $@ unless do 'script/mojopaste';
-
-my $t = Test::Mojo->new;
+my $t = t::Helper->t;
 my ($raw, $file, $json);
 
 plan skip_all => "$ENV{PASTE_DIR} was not created" unless -d $ENV{PASTE_DIR};

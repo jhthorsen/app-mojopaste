@@ -1,16 +1,7 @@
-use Mojo::Base -strict;
-use Test::More;
-use Test::Mojo;
-use Cwd ();
-use File::Spec;
+use t::Helper;
 
-$ENV{PASTE_DIR} = File::Spec->catdir(qw(t paste));
-plan skip_all => $@ unless do File::Spec->catfile(qw(script mojopaste));
-
-my $t   = Test::Mojo->new;
+my $t   = t::Helper->t;
 my $raw = "var foo = 123; # cool!\n";
-
-plan skip_all => "$ENV{PASTE_DIR} was not created" unless -d $ENV{PASTE_DIR};
 
 $t->get_ok('/')->status_is(200)->element_exists('form[method="post"][action="invalid"]', 'javascript is required')
   ->element_exists('button')->element_exists('a[href="https://metacpan.org/pod/App::mojopaste#DESCRIPTION"]');

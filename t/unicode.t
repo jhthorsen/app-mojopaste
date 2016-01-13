@@ -1,13 +1,6 @@
-use Mojo::Base -strict;
-use Test::More;
-use Test::Mojo;
+use t::Helper;
 
-$ENV{PASTE_DIR} = 't/paste';
-
-plan skip_all => 'Cannot write to paste dir' unless -w $ENV{PASTE_DIR};
-plan skip_all => $@ unless do 'script/mojopaste';
-
-my $t   = Test::Mojo->new;
+my $t   = t::Helper->t;
 my $raw = "BLACK DOWN-POINTING TRIANGLE \x{3a3}";
 
 plan skip_all => "$ENV{PASTE_DIR} was not created" unless -d $ENV{PASTE_DIR};
