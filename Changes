@@ -1,5 +1,8 @@
 Revision history for perl distribution App-mojopaste
 
+0.17 Not Released
+ - Non-existing paste will result in 404 instead of 500 #8
+
 0.16 2016-01-13T09:25:51+0100
  - Recommends JSON::Syck
  - Recommends Text::CSV

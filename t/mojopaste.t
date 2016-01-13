@@ -1,5 +1,4 @@
-use warnings;
-use strict;
+use Mojo::Base -strict;
 use Test::More;
 use Test::Mojo;
 use Cwd ();

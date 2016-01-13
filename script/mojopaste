@@ -14,6 +14,12 @@ my $ID = 0;
 my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || '/tmp/mojopaste';
 -d $paste_dir or File::Path::mkpath($paste_dir) or die "mkpath $paste_dir: $!";
 
+helper no_such_paste => sub {
+  my ($c, $err) = @_;
+  $c->app->log->debug("no_such_paste: $err");
+  $c->render(layout => 'mojopaste', paste => 'Could not find paste.', title => 'Could not find paste', status => 404);
+};
+
 helper paste => sub {
   my $cb = pop;
   my $c  = shift;
@@ -27,13 +33,13 @@ helper paste => sub {
 
 get '/' => {layout => 'mojopaste'} => sub {
   my $c = shift;
-  my $id = $c->param('edit') or return;
-  $c->delay(
+  return unless my $id = $c->param('edit');
+  return $c->delay(
     sub { $c->paste($id, shift->begin) },
     sub {
       my ($delay, $err, $paste) = @_;
-      die $err if $err;
-      $c->param(paste => $paste)->render;
+      return $c->no_such_paste($err) if $err;
+      return $c->param(paste => $paste)->render;
     },
   );
   },
@@ -63,12 +69,7 @@ get '/:paste_id', sub {
     sub { $c->paste(undef, shift->begin) },
     sub {
       my ($delay, $err, $paste) = @_;
-      return $c->render(
-        layout => 'mojopaste',
-        paste  => 'Could not find paste.',
-        title  => 'Could not find paste',
-        status => 404
-      ) if $err;
+      return $c->no_such_paste($err) if $err;
       return $c->render(layout => 'mojopaste', paste => $paste) if !$c->param('raw') and $format ne 'txt';
       $c->res->headers->content_type('text/plain; charset=utf-8');
       $c->render(text => $paste);
