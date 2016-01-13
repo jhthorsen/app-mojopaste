@@ -9,7 +9,7 @@ plugin 'config' if $ENV{MOJO_CONFIG};
 
 app->defaults(allow_robots  => app->config('allow_robots')  // $ENV{PASTE_ALLOW_ROBOTS});
 app->defaults(enable_charts => app->config('enable_charts') // $ENV{PASTE_ENABLE_CHARTS});
-app->defaults(title         => 'Mojopaste');
+app->defaults(error => '', paste => '', title => 'Mojopaste');
 
 my $ID = 0;
 my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || File::Spec->tmpdir;
@@ -18,7 +18,7 @@ my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || File::Spec->tmpdi
 helper no_such_paste => sub {
   my ($c, $err) = @_;
   $c->app->log->debug("no_such_paste: $err");
-  $c->render(layout => 'mojopaste', paste => 'Could not find paste.', title => 'Could not find paste', status => 404);
+  $c->render(layout => 'mojopaste', error => 'Could not find paste.', title => 'Could not find paste', status => 404);
 };
 
 helper paste => sub {
@@ -87,7 +87,7 @@ get
     sub { $c->paste(undef, shift->begin) },
     sub {
       my ($delay, $err, $paste) = @_;
-      return $c->render(paste => 'Could not find paste.', title => 'Could not find paste', status => 404) if $err;
+      return $c->no_such_paste($err) if $err;
 
       my @lines = grep { !m!^\s*(?://|\#)! and $_ =~ /\S/ } split /\r?\n/, $paste;
       my $chart = {data => [], element => 'chart', resize => Mojo::JSON->true};
@@ -251,7 +251,7 @@ __DATA__
 <script>
 % unless ($error) {
 try {
-  new Morris.Line(<%== Mojo::JSON::encode_json($chart) %>);
+  new Morris.Line(<%== Mojo::JSON::encode_json(stash 'chart') %>);
 } catch(e) {
   document.getElementById('chart').innerHTML = 'Invalid chart data. ' + e;
 }
@@ -271,6 +271,6 @@ window.addEventListener('load', function(e) {
   %= link_to 'New', 'pastebin', class => 'btn'
   %= include 'powered_by'
 </nav>
-<pre class="prettyprint"><%= $paste %></pre>
+<pre class="prettyprint"><%= $error || $paste %></pre>
 @@ powered_by.html.ep
 <span class="powered-by">Powered by <a href="https://metacpan.org/pod/App::mojopaste#DESCRIPTION" title="Get mojopaste">Mojopaste</a></span>
