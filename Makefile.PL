@@ -15,6 +15,6 @@ WriteMakefile(
     },
   },
   BUILD_REQUIRES => {'Test::More'  => '0.88'},
-  PREREQ_PM      => {'Mojolicious' => '6.00'},
+  PREREQ_PM      => {'Mojolicious' => '6.39'},
   test           => {TESTS         => 't/*.t'},
 );
