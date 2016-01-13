@@ -1,0 +1,9 @@
+language: perl
+perl:
+  - "5.20"
+  - "5.16"
+install:
+  - "cpanm -n Test::Pod Test::Pod::Coverage"
+  - "cpanm -n --installdeps ."
+notifications:
+  email: false
