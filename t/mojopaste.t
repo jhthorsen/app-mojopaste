@@ -2,10 +2,10 @@ use Mojo::Base -strict;
 use Test::More;
 use Test::Mojo;
 use Cwd ();
+use File::Spec;
 
-$ENV{PASTE_DIR} = 't/paste';
-
-plan skip_all => $@ unless do 'script/mojopaste';
+$ENV{PASTE_DIR} = File::Spec->catdir(qw(t paste));
+plan skip_all => $@ unless do File::Spec->catfile(qw(script mojopaste));
 
 my $t   = Test::Mojo->new;
 my $raw = "var foo = 123; # cool!\n";

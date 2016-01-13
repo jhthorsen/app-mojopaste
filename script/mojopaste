@@ -2,6 +2,7 @@
 use Mojolicious::Lite;
 use Mojo::Util qw(encode decode spurt slurp);
 use File::Path ();
+use File::Spec;
 use constant HUMAN_JSON => eval 'require JSON::Syck;JSON::Syck->new->utf8(1)->relaxed(1)->allow_barekey(1)' || 0;
 
 plugin 'config' if $ENV{MOJO_CONFIG};
@@ -11,7 +12,7 @@ app->defaults(enable_charts => app->config('enable_charts') // $ENV{PASTE_ENABLE
 app->defaults(title         => 'Mojopaste');
 
 my $ID = 0;
-my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || '/tmp/mojopaste';
+my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || File::Spec->tmpdir;
 -d $paste_dir or File::Path::mkpath($paste_dir) or die "mkpath $paste_dir: $!";
 
 helper no_such_paste => sub {
@@ -26,8 +27,8 @@ helper paste => sub {
   my $id = shift // $c->stash('paste_id');
 
   return $c->$cb("Hacking attempt: $id", "") if $id =~ m!\W!;
-  return $c->$cb($!, eval { decode "UTF-8", slurp "$paste_dir/$id" }) unless @_;
-  spurt encode("UTF-8", $_[0]), "$paste_dir/$id";
+  return $c->$cb($!, eval { decode "UTF-8", slurp(File::Spec->catfile($paste_dir, $id)) }) unless @_;
+  spurt encode("UTF-8", $_[0]), File::Spec->catfile($paste_dir, $id);
   $c->$cb("");
 };
 
