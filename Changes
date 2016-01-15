@@ -1,5 +1,9 @@
 Revision history for perl distribution App-mojopaste
 
+0.18 2016-01-15T07:52:58+0100
+ - Try to fix failing MSWin32 test
+   http://www.cpantesters.org/cpan/report/873ffedb-6bf4-1014-a355-7b0739136c96
+
 0.17 2016-01-13T21:36:27+0100
  - Fix unicode.t by bumping Mojolicious version #10
  - Cannot make empty paste

@@ -14,7 +14,7 @@ sub import {
   my $caller = caller;
 
   $_->import for qw(strict warnings utf8);
-  $ENV{PASTE_DIR} = Cwd::abs_path(File::Spec->catdir(qw(t paste)));
+  $ENV{PASTE_DIR} = File::Spec->catdir(qw(t paste));
 
   eval <<"HERE" or die $@;
 package $caller;
