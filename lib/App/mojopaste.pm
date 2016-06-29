@@ -1,5 +1,11 @@
 package App::mojopaste;
 
+our $VERSION = '0.18';
+
+1;
+
+=encoding utf8
+
 =head1 NAME
 
 App::mojopaste - Pastebin application
@@ -151,14 +157,8 @@ Check out L<Mojo::Server::Hypnotoad> for more hypnotoad options.
 
 =back
 
-=cut
-
-our $VERSION = '0.18';
-
 =head1 AUTHOR
 
 Jan Henning Thorsen - C<jhthorsen@cpan.org>
 
 =cut
-
-1;
