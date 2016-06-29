@@ -1,5 +1,8 @@
 Revision history for perl distribution App-mojopaste
 
+0.21 Not Released
+ - Change default paste directory
+
 0.20 2016-06-29T18:08:30+0200
  - Fix X-Plain-Text-URL must be an absolute URL
  - Add line numbers to pretty printed code

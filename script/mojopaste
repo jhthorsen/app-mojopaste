@@ -20,7 +20,7 @@ app->defaults(
 );
 
 my $ID = 0;
-my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || File::Spec->tmpdir;
+my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || 'paste';
 -d $paste_dir or File::Path::mkpath($paste_dir) or die "mkpath $paste_dir: $!";
 
 helper no_such_paste => sub {
