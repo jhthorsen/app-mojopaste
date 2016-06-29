@@ -90,7 +90,7 @@ get '/:paste_id', sub {
         $c->render(text => $paste);
       }
       else {
-        $c->res->headers->header('X-Plain-Text-URL' => $c->url_for(format => 'txt'));
+        $c->res->headers->header('X-Plain-Text-URL' => $c->url_for(format => 'txt')->userinfo(undef)->to_abs);
         $c->render(layout => 'mojopaste', paste => $paste);
       }
     },

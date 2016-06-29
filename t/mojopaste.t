@@ -21,7 +21,7 @@ $t->get_ok($t->tx->res->headers->location)->status_is(200)->element_exists(qq(a[
 # $ENV{PASTE_ENABLE_CHARTS} is not set
 $t->get_ok("/$id/chart")->status_is(404);
 
-$t->get_ok("/$id")->header_is('X-Plain-Text-URL', "/$id.txt");
+$t->get_ok("/$id")->header_like('X-Plain-Text-URL', qr{:\d+/$id\.txt$});
 $t->get_ok("/$id.txt")->content_is($raw);
 ok !$t->tx->res->headers->header('X-Plain-Text-URL'), 'no X-Plain-Text-URL';
 
