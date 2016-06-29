@@ -3,6 +3,7 @@ Revision history for perl distribution App-mojopaste
 0.19 Not Released
  - Fix selecting only pastebin text on ctrl+a or cmd+a
  - Fix handling of empty paste
+ - Add EXPERIMENTAL X-Plain-Text-URL header to paste web page
  - Change from dark to light color theme
 
 0.18 2016-01-15T07:52:58+0100

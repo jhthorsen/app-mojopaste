@@ -78,10 +78,17 @@ get '/:paste_id', sub {
     sub { $c->paste(undef, shift->begin) },
     sub {
       my ($delay, $err, $paste) = @_;
-      return $c->no_such_paste($err) if $err;
-      return $c->render(layout => 'mojopaste', paste => $paste) if !$c->param('raw') and $format ne 'txt';
-      $c->res->headers->content_type('text/plain; charset=utf-8');
-      $c->render(text => $paste);
+      if ($err) {
+        $c->no_such_paste($err);
+      }
+      elsif ($c->param('raw') or $format eq 'txt') {
+        $c->res->headers->content_type('text/plain; charset=utf-8');
+        $c->render(text => $paste);
+      }
+      else {
+        $c->res->headers->header('X-Plain-Text-URL' => $c->url_for(format => 'txt'));
+        $c->render(layout => 'mojopaste', paste => $paste);
+      }
     },
   );
 }, 'show';
