@@ -186,10 +186,10 @@ __DATA__
   %= stylesheet '//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css' if stash 'chart';
   %= stylesheet begin
   html, body, form, text { padding: 0; margin: 0; }
-  body { margin-top: 60px; }
+  body { margin-top: 38px; }
   body, textarea { background: #f8f8f8; }
   body, textarea, a, .btn { color: #555; font-size: 16px; font-family: 'Helvetica Neue', Helvetica, sans-serif; }
-  h2 { font-size: 1.5em; }
+  h2 { font-size: 1.5em; padding-top: 20px; }
   h2, p { margin: 20px; }
   nav, .btn { background: #e6e6e6; }
   nav { border-bottom: 1px solid #ddd; padding: 4px 10px; overflow: hidden; position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
