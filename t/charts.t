@@ -6,7 +6,14 @@ my ($raw, $file, $json);
 
 plan skip_all => "$ENV{PASTE_DIR} was not created" unless -d $ENV{PASTE_DIR};
 
-$raw = q([
+$raw = q(
+#
+# Some cool header
+#
+# A wonderful
+  # description.
+
+      [
   { "x": "2015-02-04 15:03", "a": 120, "b": 90 },
   { "x": "2015-03-14", "a": 75, "b": 65 },
   { "x": "2015-04", "a": 100, "b": 40 }
@@ -16,7 +23,8 @@ $file = $t->tx->res->headers->location =~ m!/(\w+)$! ? $1 : 'nope';
 $t->get_ok("/$file")->status_is(200)->element_exists(qq(a[href\$="/chart"]));
 
 $t->get_ok("/$file/chart")->status_is(200)->content_like(qr{jquery\.min\.js})->content_like(qr{morris\.css})
-  ->content_like(qr{morris\.min\.js})->content_like(qr{raphael-min\.js})->element_exists('div[id="chart"]');
+  ->content_like(qr{morris\.min\.js})->content_like(qr{raphael-min\.js})->element_exists('div[id="chart"]')
+  ->text_like('h2', qr{Some cool header}, 'header')->text_like('p', qr{A wonderful description\.}, 'description');
 
 $json = $t->tx->res->body =~ m!new Morris\.Line\(([^\)]+)\)! ? Mojo::JSON::decode_json($1) : undef;
 is_deeply($json->{labels}, ['a', 'b'], 'default labels');

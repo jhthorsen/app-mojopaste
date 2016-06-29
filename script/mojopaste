@@ -1,8 +1,11 @@
 #!/usr/bin/env perl
 use Mojolicious::Lite;
+
 use Mojo::Util qw(encode decode spurt slurp);
 use File::Path ();
 use File::Spec;
+use Mojo::JSON 'true';
+
 use constant HUMAN_JSON => eval 'require JSON::Syck;JSON::Syck->new->utf8(1)->relaxed(1)->allow_barekey(1)' || 0;
 
 plugin 'config' if $ENV{MOJO_CONFIG};
@@ -23,7 +26,8 @@ my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || File::Spec->tmpdi
 helper no_such_paste => sub {
   my ($c, $err) = @_;
   $c->app->log->debug("no_such_paste: $err");
-  $c->render(layout => 'mojopaste', error => 'Could not find paste.', title => 'Could not find paste', status => 404);
+  $c->stash($_ => 'Could not find paste') for qw(error heading title);
+  $c->render(description => '', layout => 'mojopaste', status => 404);
 };
 
 helper paste => sub {
@@ -104,8 +108,15 @@ get
       my ($delay, $err, $paste) = @_;
       return $c->no_such_paste($err) if $err;
 
-      my @lines = grep { !m!^\s*(?://|\#)! and $_ =~ /\S/ } split /\r?\n/, $paste;
-      my $chart = {data => [], element => 'chart', resize => Mojo::JSON->true};
+      my ($heading, $description) = ('', '');
+
+      while ($paste =~ s!^\s*(?://|\#)(.*)!!m) {
+        $description .= $1 if $heading;
+        $heading ||= $1;
+      }
+
+      my @lines = grep { $_ =~ /\S/ } split /\r?\n/, $paste;
+      my $chart = {data => [], element => 'chart', hideHover => true, resize => true};
       my $error;
 
       if (!@lines) {
@@ -145,7 +156,7 @@ get
       $chart->{labels} ||= $chart->{ykeys};
 
       $error =~ s!at .*? line \d+$!! if $error;
-      $c->render(chart => $chart, error => $error);
+      $c->render(chart => $chart, description => $description, error => $error, heading => $heading);
     }
   );
   }, 'chart' if app->defaults('enable_charts');
@@ -175,11 +186,13 @@ __DATA__
   %= stylesheet '//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css' if stash 'chart';
   %= stylesheet begin
   html, body, form, text { padding: 0; margin: 0; }
-  body { margin-top: 40px; }
+  body { margin-top: 60px; }
   body, textarea { background: #f8f8f8; }
   body, textarea, a, .btn { color: #555; font-size: 16px; font-family: 'Helvetica Neue', Helvetica, sans-serif; }
+  h2 { font-size: 1.5em; }
+  h2, p { margin: 20px; }
   nav, .btn { background: #e6e6e6; }
-  nav { border-bottom: 1px solid #ddd; padding: 4px 10px; overflow: hidden; position: fixed; top: 0; left: 0; right: 0; }
+  nav { border-bottom: 1px solid #ddd; padding: 4px 10px; overflow: hidden; position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
   textarea, pre, .prettyprint { font-family:Menlo,Bitstream Vera Sans Mono,DejaVu Sans Mono,Monaco,Consolas,monospace; border:0!important, box-sizing: border-box; margin: 0; padding: 20px; }
   textarea { width: 100%; height: 90%; border: 0; outline-offset: 0; outline: 0; display: block; }
   pre { margin-bottom: 60px; }
@@ -271,11 +284,17 @@ __DATA__
 % end
 @@ chart.html.ep
 <nav>
-  %= link_to 'Data', url_for('show', paste_id => $paste_id), class => 'btn first'
-  %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id), class => 'btn'
   %= link_to 'New', 'pastebin', class => 'btn'
+  %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id), class => 'btn'
+  %= link_to 'Data', url_for('show', paste_id => $paste_id), class => 'btn first'
   %= include 'powered_by'
 </nav>
+% if ($heading) {
+<h2><%= $heading %></h2>
+% }
+% if ($description) {
+<p><%= $description %></p>
+% }
 <div id="chart" style="height:90%"><%= $error %></div>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
