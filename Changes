@@ -2,6 +2,7 @@ Revision history for perl distribution App-mojopaste
 
 0.20 Not Released
  - Fix X-Plain-Text-URL must be an absolute URL
+ - Add line numbers to pretty printed code
 
 0.19 2016-06-29T13:59:26+0200
  - Fix selecting only pastebin text on ctrl+a or cmd+a
