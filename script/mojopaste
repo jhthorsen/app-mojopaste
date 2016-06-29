@@ -176,6 +176,23 @@ __DATA__
   .morris-hover.morris-default-style{background:rgba(25,25,25,0.9);border:0;color:#ccc}
   % end
   <script type="text/javascript">
+  window.addEventListener('keydown', function(e) {
+    var el;
+    if (!e.ctrlKey && !e.metaKey) return; // ctrl or cmd
+    if (e.keyCode != 65 && e.keyCode != 97) return; // A or a
+    if (el = document.querySelector(".prettyprint")) {
+      var range = document.createRange();
+      range.selectNodeContents(el);
+      var selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      e.preventDefault();
+    }
+    else if(el = document.querySelector("textarea")) {
+      el.select();
+      e.preventDefault();
+    }
+  });
   window.addEventListener('load', function(e) {
     var btn = document.getElementsByTagName('button')[0];
     var editor = document.getElementsByTagName('textarea')[0];
