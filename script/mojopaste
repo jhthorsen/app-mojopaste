@@ -7,9 +7,14 @@ use constant HUMAN_JSON => eval 'require JSON::Syck;JSON::Syck->new->utf8(1)->re
 
 plugin 'config' if $ENV{MOJO_CONFIG};
 
-app->defaults(allow_robots  => app->config('allow_robots')  // $ENV{PASTE_ALLOW_ROBOTS});
-app->defaults(enable_charts => app->config('enable_charts') // $ENV{PASTE_ENABLE_CHARTS});
-app->defaults(error => '', paste => '', title => 'Mojopaste');
+app->defaults(
+  allow_robots  => app->config('allow_robots')  // $ENV{PASTE_ALLOW_ROBOTS},
+  enable_charts => app->config('enable_charts') // $ENV{PASTE_ENABLE_CHARTS},
+  error         => '',
+  paste         => '',
+  placeholder   => 'Enter your text here and then press the "Paste" button above.',
+  title         => 'Mojopaste',
+);
 
 my $ID = 0;
 my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || File::Spec->tmpdir;
@@ -46,11 +51,14 @@ get '/' => {layout => 'mojopaste'} => sub {
   },
   'pastebin';
 
-post '/' => sub {
+post
+  '/' => {layout => 'mojopaste'},
+  sub {
   my $c = shift;
   my $paste = $c->param('paste') || '';
 
-  return $c->render('pastebin', status => 400) unless $paste =~ /\w/;
+  return $c->render('pastebin', placeholder => 'You neeed to enter some characters!', status => 400)
+    unless $paste =~ /\w/;
   my $id = substr Mojo::Util::md5_sum($$ . time . $ID++), 0, 12;
   $c->delay(
     sub { $c->paste($id, $paste, shift->begin) },
@@ -60,7 +68,7 @@ post '/' => sub {
       $c->redirect_to('show', paste_id => $id);
     },
   );
-};
+  };
 
 get '/:paste_id', sub {
   my $c = shift;
@@ -252,7 +260,7 @@ __DATA__
   <button class="btn first" tabindex="2">Paste</button>
   %= include 'powered_by'
 </nav>
-%= text_area 'paste', placeholder => 'Enter your text here and then press the "Paste" button above.', tabindex => 1
+%= text_area 'paste', placeholder => $placeholder, tabindex => 1
 % end
 @@ chart.html.ep
 <nav>
