@@ -2,6 +2,7 @@ Revision history for perl distribution App-mojopaste
 
 0.19 Not Released
  - Fix selecting only pastebin text on ctrl+a or cmd+a
+ - Change from dark to light color theme
 
 0.18 2016-01-15T07:52:58+0100
  - Try to fix failing MSWin32 test
