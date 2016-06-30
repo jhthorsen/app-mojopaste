@@ -13,6 +13,7 @@ plugin 'config' if $ENV{MOJO_CONFIG};
 app->defaults(
   allow_robots  => app->config('allow_robots')  // $ENV{PASTE_ALLOW_ROBOTS},
   enable_charts => app->config('enable_charts') // $ENV{PASTE_ENABLE_CHARTS},
+  embed         => 'description,graph,heading,menu',
   error         => '',
   paste         => '',
   placeholder   => 'Enter your text here and then press the "Save" button above.',
@@ -91,6 +92,7 @@ get '/:paste_id', sub {
       }
       else {
         $c->res->headers->header('X-Plain-Text-URL' => $c->url_for(format => 'txt')->userinfo(undef)->to_abs);
+        $c->stash(embed => $c->param('embed')) if $c->param('embed');
         $c->render(layout => 'mojopaste', paste => $paste);
       }
     },
@@ -156,7 +158,8 @@ get
       $chart->{labels} ||= $chart->{ykeys};
 
       $error =~ s!at .*? line \d+$!! if $error;
-      $c->render(chart => $chart, description => $description, error => $error, heading => $heading);
+      $c->stash(embed => $c->param('embed')) if $c->param('embed');
+      $c->render(chart => $chart, description => $description // '', error => $error, heading => $heading);
     }
   );
   }, 'chart' if app->defaults('enable_charts');
@@ -186,11 +189,12 @@ __DATA__
   %= stylesheet '//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css' if stash 'chart';
   %= stylesheet begin
   html, body, form, text { padding: 0; margin: 0; }
-  body { margin-top: 38px; }
+  body.has-menu { margin-top: 38px; }
   body, textarea { background: #f8f8f8; }
   body, textarea, a, .btn { color: #555; font-size: 16px; font-family: 'Helvetica Neue', Helvetica, sans-serif; }
-  h2 { font-size: 1.5em; padding-top: 20px; }
+  h2 { font-size: 1.5em; }
   h2, p { margin: 20px; }
+  body.has-menu h2 { padding-top: 20px; }
   nav, .btn { background: #e6e6e6; border: 0 solid #ddd }
   nav { border-bottom-width: 1px; padding: 0 10px; overflow: hidden; position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
   textarea, pre, .prettyprint { font-family:Menlo,Bitstream Vera Sans Mono,DejaVu Sans Mono,Monaco,Consolas,monospace; border:0!important, box-sizing: border-box; margin: 0; padding: 20px; }
@@ -271,43 +275,47 @@ __DATA__
   </script>
 </head>
 
-<body>
+<body class="<%= $embed =~ /menu/ ? 'has-menu' : '' %>">
   %= content
 </body>
 </html>
 @@ pastebin.html.ep
 %= form_for +($allow_robots ? 'pastebin' : 'invalid'), method => 'post', begin
+% if ($embed =~ /menu/) {
 <nav>
   <button class="btn first" tabindex="2">Save</button>
   %= include 'powered_by'
 </nav>
+% }
 %= text_area 'paste', placeholder => $placeholder, tabindex => 1
 % end
 @@ chart.html.ep
+% if ($embed =~ /menu/) {
 <nav>
   %= link_to 'New', 'pastebin', class => 'btn'
   %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id), class => 'btn'
   %= link_to 'Data', url_for('show', paste_id => $paste_id), class => 'btn first'
   %= include 'powered_by'
 </nav>
-% if ($heading) {
+% }
+% if ($heading and $embed =~ /heading/) {
 <h2><%= $heading %></h2>
 % }
-% if ($description) {
+% if ($description and $embed =~ /description/) {
 <p><%= $description %></p>
 % }
+% if ($embed =~ /graph/) {
 <div id="chart" style="height:90%"><%= $error %></div>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
+  % unless ($error) {
 <script>
-% unless ($error) {
 try {
   new Morris.Line(<%== Mojo::JSON::encode_json(stash 'chart') %>);
 } catch(e) {
   document.getElementById('chart').innerHTML = 'Invalid chart data. ' + e;
 }
-% }
 window.addEventListener('load', function(e) {
   var chart = document.getElementById('chart');
   var resize = function() { chart.style.height = window.innerHeight - document.getElementsByTagName('nav')[0].clientHeight + 'px'; };
@@ -315,6 +323,8 @@ window.addEventListener('load', function(e) {
   resize();
 });
 </script>
+  % }
+% }
 @@ show.html.ep
 <nav>
   %= link_to 'New', 'pastebin', class => 'btn'
