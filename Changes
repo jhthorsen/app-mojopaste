@@ -1,6 +1,6 @@
 Revision history for perl distribution App-mojopaste
 
-0.21 Not Released
+0.21 2016-06-30T14:44:51+0200
  - Change default paste directory
  - Can embed paste and graphs
  - Fix using the whole window and nothing more when showing a graph

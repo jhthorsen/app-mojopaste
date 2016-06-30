@@ -2,7 +2,7 @@ NAME
     App::mojopaste - Pastebin application
 
 VERSION
-    0.20
+    0.21
 
 DESCRIPTION
     Mojopaste is a pastebin application. There's about one million of these
@@ -26,56 +26,75 @@ DESCRIPTION
 
     The input chart data can be given as JSON or CSV:
 
-    *   Raw morris.js arguments
+    * Raw morris.js arguments
 
-        Example:
+      Example:
 
-          {
-            "data": [
-              { "x": "2015-02-04 15:03", "a": 120, "b": 90 },
-              { "x": "2015-03-14", "a": 75, "b": 65 },
-              { "x": "2015-04", "a": 100, "b": 40 }
-            ],
-            "xkey": "x",
-            "ykeys": ["a", "b"],
-            "labels": ["Series A", "Series B"]
-          }
-
-        "xkey" default to "x". "ykeys" default to the rest of the keys in
-        the first element in "data", excluding xkey. "labels" default to
-        "ykeys".
-
-        See <http://morrisjs.github.io/morris.js/lines.html> for more
-        details.
-
-        Note that by installing JSON.pm the input format can be less strict,
-        allowing JavaScript notation instead of strict JSON.
-
-    *   Just data
-
-          [
-            // comments are allowed
-            # both "#" and "//" can be used anywhere, but on a line by itself
+        {
+          "data": [
             { "x": "2015-02-04 15:03", "a": 120, "b": 90 },
             { "x": "2015-03-14", "a": 75, "b": 65 },
             { "x": "2015-04", "a": 100, "b": 40 }
-          ]
+          ],
+          "xkey": "x",
+          "ykeys": ["a", "b"],
+          "labels": ["Series A", "Series B"]
+        }
 
-        This input format takes just an JSON array and will use that as
-        "data". The rest will use the default value rules from above.
+      "xkey" default to "x". "ykeys" default to the rest of the keys in the
+      first element in "data", excluding xkey. "labels" default to "ykeys".
 
-    *   CSV data
+      See <http://morrisjs.github.io/morris.js/lines.html> for more details.
 
-        CSV data is similar to "Just data" above, except the first line is
-        used as "xkey,ykey1,ykey2,...". Example:
+      Note that by installing JSON.pm the input format can be less strict,
+      allowing JavaScript notation instead of strict JSON.
 
-          # Can have comments in CSV input as well
-          x,a,b
-          2015-02-04 15:03,120,90
-          2015-03-14,75,65
-          2015-04,100,40
+    * Just data
 
-        CSV input data require Text::CSV to be installed.
+        [
+          // comments are allowed
+          # both "#" and "//" can be used anywhere, but on a line by itself
+          { "x": "2015-02-04 15:03", "a": 120, "b": 90 },
+          { "x": "2015-03-14", "a": 75, "b": 65 },
+          { "x": "2015-04", "a": 100, "b": 40 }
+        ]
+
+      This input format takes just an JSON array and will use that as
+      "data". The rest will use the default value rules from above.
+
+    * CSV data
+
+      CSV data is similar to "Just data" above, except the first line is
+      used as "xkey,ykey1,ykey2,...". Example:
+
+        # Can have comments in CSV input as well
+        x,a,b
+        2015-02-04 15:03,120,90
+        2015-03-14,75,65
+        2015-04,100,40
+
+      CSV input data require Text::CSV to be installed.
+
+  Embedding
+    A paste can be embedded in other pages using the query param "embed".
+    Examples:
+
+    * <http://p.thorsen.pm/mojopastedemo.txt>
+
+      Get the raw data.
+
+    * <http://p.thorsen.pm/mojopastedemo?embed=text>
+
+      Show the paste without any margin/padding and no menu.
+
+    * <http://p.thorsen.pm/mojopastedemo/chart?embed=graph>
+
+      Show only the graph data.
+
+    * <http://p.thorsen.pm/mojopastedemo/chart?embed=graph,heading,descripti
+      on>
+
+      Show the graph data, heading and description, but no menus.
 
 DEMO
     You can try mojopaste here: <http://p.thorsen.pm>.
@@ -91,43 +110,43 @@ INSTALLATION
       $ wget http://cpanmin.us -O - | perl - --sudo App::mojopaste
 
 SYNOPSIS
-    *   Simple single process daemon
+    * Simple single process daemon
 
-          $ mojopaste daemon --listen http://*:8080
+        $ mojopaste daemon --listen http://*:8080
 
-    *   Save paste to custom dir
+    * Save paste to custom dir
 
-          $ PASTE_DIR=/path/to/paste/dir mojopaste daemon --listen http://*:8080
+        $ PASTE_DIR=/path/to/paste/dir mojopaste daemon --listen http://*:8080
 
-    *   Using the UNIX optimized, preforking hypnotoad web server
+    * Using the UNIX optimized, preforking hypnotoad web server
 
-          $ MOJO_CONFIG=/path/to/mojopaste.conf hypnotoad $(which mojopaste)
+        $ MOJO_CONFIG=/path/to/mojopaste.conf hypnotoad $(which mojopaste)
 
-        Example mojopaste.conf:
+      Example mojopaste.conf:
 
-          {
-            paste_dir     => '/path/to/paste/dir',
-            allow_robots  => 1, # default is 0
-            enable_charts => 1, # default is 0
-            hypnotoad => {
-              listen => ['http://*:8080'],
-            },
-          }
+        {
+          paste_dir     => '/path/to/paste/dir',
+          allow_robots  => 1, # default is 0
+          enable_charts => 1, # default is 0
+          hypnotoad => {
+            listen => ['http://*:8080'],
+          },
+        }
 
-        "allow_robots" will disable javascript requirements and allow simple
-        scripts (robots) to use the pastebin without much knowledge.
+      "allow_robots" will disable javascript requirements and allow simple
+      scripts (robots) to use the pastebin without much knowledge.
 
-        "enable_charts" is for adding a button which can make a chart of the
-        input data using morris.js <http://morrisjs.github.io/morris.js>
+      "enable_charts" is for adding a button which can make a chart of the
+      input data using morris.js <http://morrisjs.github.io/morris.js>
 
-        Check out Mojo::Server::Hypnotoad for more hypnotoad options.
+      Check out Mojo::Server::Hypnotoad for more hypnotoad options.
 
 OTHER PASTEBINS
-    *   <http://paste.scsys.co.uk>
+    * <http://paste.scsys.co.uk>
 
-    *   <http://paste.ubuntu.com>
+    * <http://paste.ubuntu.com>
 
-    *   <http://pastebin.com>
+    * <http://pastebin.com>
 
 AUTHOR
     Jan Henning Thorsen - "jhthorsen@cpan.org"
