@@ -198,7 +198,7 @@ __DATA__
   nav, .btn { background: #e6e6e6; border: 0 solid #ddd }
   nav { border-bottom-width: 1px; padding: 0 10px; overflow: hidden; position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
   textarea, pre, .prettyprint { font-family:Menlo,Bitstream Vera Sans Mono,DejaVu Sans Mono,Monaco,Consolas,monospace; border:0!important, box-sizing: border-box; margin: 0; padding: 20px; }
-  textarea { width: 100%; height: 90%; border: 0; outline-offset: 0; outline: 0; display: block; }
+  textarea { width: 100%; height: 100%; border: 0; outline-offset: 0; outline: 0; display: block; }
   pre { margin-bottom: 60px; }
   .btn { background: #ddd; font-size: 14px; line-height: 1.5; text-decoration: none; text-align: center; padding: 7px 12px; margin-right: 3px; vertical-align: middle; display: block; float: left; cursor: pointer; }
   .btn:hover { background: #d0d0d0; }
@@ -209,7 +209,7 @@ __DATA__
   @media screen{.str{color:#183691}.kwd{color:#a71d5d}.com{color:#969896}.typ{color:#0086b3}.lit{color:#0086b3}.pun{color:#333}.opn{color:#333}.clo{color:#333}.tag{color:navy}.atn{color:#795da3}.atv{color:#183691}.dec{color:#333}.var{color:teal}.fun{color:#900}}
   % end
   <script type="text/javascript">
-  window.addEventListener('keydown', function(e) {
+  window.onkeydown = function(e) {
     var el;
     if (!e.ctrlKey && !e.metaKey) return; // ctrl or cmd
     if (e.keyCode != 65 && e.keyCode != 97) return; // A or a
@@ -225,22 +225,19 @@ __DATA__
       el.select();
       e.preventDefault();
     }
-  });
-  window.addEventListener('load', function(e) {
-    var btn = document.getElementsByTagName('button')[0];
-    var editor = document.getElementsByTagName('textarea')[0];
-    var pre = document.getElementsByTagName('pre')[0];
-    var resize = function() { editor.style.height = window.innerHeight - document.getElementsByTagName('nav')[0].clientHeight + 'px'; };
-    if (btn) {
-      editor.focus();
-      window.addEventListener('resize', resize);
-      btn.addEventListener('click', function(e) { document.getElementsByTagName('form')[0].action = '<%= url_for 'pastebin' %>'; });
-      resize();
+  };
+  window.onload = function(e) {
+    var form = document.querySelector('form');
+    var pre = document.querySelector('pre');
+
+    if (form) {
+      document.querySelector('textarea').focus();
+      document.querySelector('.save.btn').onclick = function(e) { form.action = '<%= url_for 'pastebin' %>' };
     }
     if (pre && pre.firstChild.nodeValue.length < 50000) {
       prettyPrint();
     }
-  });
+  };
   /* prettify from google */
   !function(){var q=null;window.PR_SHOULD_USE_CONTINUATION=!0;
   (function(){function S(a){function d(e){var b=e.charCodeAt(0);if(b!==92)return b;var a=e.charAt(1);return(b=r[a])?b:"0"<=a&&a<="7"?parseInt(e.substring(1),8):a==="u"||a==="x"?parseInt(e.substring(2),16):e.charCodeAt(1)}function g(e){if(e<32)return(e<16?"\\x0":"\\x")+e.toString(16);e=String.fromCharCode(e);return e==="\\"||e==="-"||e==="]"||e==="^"?"\\"+e:e}function b(e){var b=e.substring(1,e.length-1).match(/\\u[\dA-Fa-f]{4}|\\x[\dA-Fa-f]{2}|\\[0-3][0-7]{0,2}|\\[0-7]{1,2}|\\[\S\s]|[^\\]/g),e=[],a=
@@ -283,7 +280,7 @@ __DATA__
 %= form_for +($allow_robots ? 'pastebin' : 'invalid'), method => 'post', begin
 % if ($embed =~ /menu/) {
 <nav>
-  <button class="btn first" tabindex="2">Save</button>
+  <button class="save btn" tabindex="2">Save</button>
   %= include 'powered_by'
 </nav>
 % }
@@ -294,7 +291,7 @@ __DATA__
 <nav>
   %= link_to 'New', 'pastebin', class => 'btn'
   %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id), class => 'btn'
-  %= link_to 'Data', url_for('show', paste_id => $paste_id), class => 'btn first'
+  %= link_to 'Data', url_for('show', paste_id => $paste_id), class => 'btn'
   %= include 'powered_by'
 </nav>
 % }
@@ -305,23 +302,21 @@ __DATA__
 <p><%= $description %></p>
 % }
 % if ($embed =~ /graph/) {
-<div id="chart" style="height:90%"><%= $error %></div>
+<div id="chart"><%= $error %></div>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
   % unless ($error) {
 <script>
 try {
+  var chart = document.getElementById('chart');
+  var tid, resize = function() { chart.style.height = (window.innerHeight - chart.offsetTop) + 'px' };
+  resize();
+  window.onresize = function() { if (tid) clearTimeout(tid); var tid = setTimeout(resize, 10); }
   new Morris.Line(<%== Mojo::JSON::encode_json(stash 'chart') %>);
 } catch(e) {
   document.getElementById('chart').innerHTML = 'Invalid chart data. ' + e;
 }
-window.addEventListener('load', function(e) {
-  var chart = document.getElementById('chart');
-  var resize = function() { chart.style.height = window.innerHeight - document.getElementsByTagName('nav')[0].clientHeight + 'px'; };
-  window.addEventListener('resize', resize);
-  resize();
-});
 </script>
   % }
 % }
@@ -329,7 +324,7 @@ window.addEventListener('load', function(e) {
 <nav>
   %= link_to 'New', 'pastebin', class => 'btn'
   %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id), class => 'btn'
-  %= link_to 'Raw', url_for('show', paste_id => $paste_id, format => 'txt'), class => 'btn first'
+  %= link_to 'Raw', url_for('show', paste_id => $paste_id, format => 'txt'), class => 'btn'
   %= link_to 'Graph', url_for('chart'), class => 'btn' if $enable_charts
   %= include 'powered_by'
 </nav>
