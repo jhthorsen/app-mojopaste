@@ -38,7 +38,7 @@ environment variable:
 
 The input chart data can be given as JSON or CSV:
 
-=over 4
+=over 2
 
 =item * Raw morris.js arguments
 
@@ -93,6 +93,30 @@ CSV input data require L<Text::CSV> to be installed.
 
 =back
 
+=head2 Embedding
+
+A paste can be embedded in other pages using the query param "embed". Examples:
+
+=over 2
+
+=item * L<http://p.thorsen.pm/mojopastedemo.txt>
+
+Get the raw data.
+
+=item * L<http://p.thorsen.pm/mojopastedemo?embed=text>
+
+Show the paste without any margin/padding and no menu.
+
+=item * L<http://p.thorsen.pm/mojopastedemo/chart?embed=graph>
+
+Show only the graph data.
+
+=item * L<http://p.thorsen.pm/mojopastedemo/chart?embed=graph,heading,description>
+
+Show the graph data, heading and description, but no menus.
+
+=back
+
 =head1 DEMO
 
 You can try mojopaste here: L<http://p.thorsen.pm>.
@@ -110,7 +134,7 @@ Don't have cpanm installed?
 
 =head1 SYNOPSIS
 
-=over 4
+=over 2
 
 =item * Simple single process daemon
 
@@ -147,7 +171,7 @@ Check out L<Mojo::Server::Hypnotoad> for more hypnotoad options.
 
 =head1 OTHER PASTEBINS
 
-=over 4
+=over 2
 
 =item * L<http://paste.scsys.co.uk>
 

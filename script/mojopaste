@@ -13,7 +13,7 @@ plugin 'config' if $ENV{MOJO_CONFIG};
 app->defaults(
   allow_robots  => app->config('allow_robots')  // $ENV{PASTE_ALLOW_ROBOTS},
   enable_charts => app->config('enable_charts') // $ENV{PASTE_ENABLE_CHARTS},
-  embed         => 'description,graph,heading,menu',
+  embed         => 'description,graph,heading,nav',
   error         => '',
   paste         => '',
   placeholder   => 'Enter your text here and then press the "Save" button above.',
@@ -189,15 +189,16 @@ __DATA__
   %= stylesheet '//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css' if stash 'chart';
   %= stylesheet begin
   html, body, form, text { padding: 0; margin: 0; }
-  body.has-menu { margin-top: 38px; }
+  body.has-nav { margin-top: 38px; }
   body, textarea { background: #f8f8f8; }
   body, textarea, a, .btn { color: #555; font-size: 16px; font-family: 'Helvetica Neue', Helvetica, sans-serif; }
   h2 { font-size: 1.5em; }
   h2, p { margin: 20px; }
-  body.has-menu h2 { padding-top: 20px; }
+  body.has-nav h2 { padding-top: 20px; }
   nav, .btn { background: #e6e6e6; border: 0 solid #ddd }
   nav { border-bottom-width: 1px; padding: 0 10px; overflow: hidden; position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
-  textarea, pre, .prettyprint { font-family:Menlo,Bitstream Vera Sans Mono,DejaVu Sans Mono,Monaco,Consolas,monospace; border:0!important, box-sizing: border-box; margin: 0; padding: 20px; }
+  textarea, pre, .prettyprint { font-family:Menlo,Bitstream Vera Sans Mono,DejaVu Sans Mono,Monaco,Consolas,monospace; border:0!important, box-sizing: border-box; margin: 0; }
+  body.has-nav textarea, body.has-nav pre { padding: 20px; }
   textarea { width: 100%; height: 100%; border: 0; outline-offset: 0; outline: 0; display: block; }
   pre { margin-bottom: 60px; }
   .btn { background: #ddd; font-size: 14px; line-height: 1.5; text-decoration: none; text-align: center; padding: 7px 12px; margin-right: 3px; vertical-align: middle; display: block; float: left; cursor: pointer; }
@@ -272,22 +273,20 @@ __DATA__
   </script>
 </head>
 
-<body class="<%= $embed =~ /menu/ ? 'has-menu' : '' %>">
+<body class="<%= $embed =~ /nav/ ? 'has-nav' : '' %>">
   %= content
 </body>
 </html>
 @@ pastebin.html.ep
 %= form_for +($allow_robots ? 'pastebin' : 'invalid'), method => 'post', begin
-% if ($embed =~ /menu/) {
 <nav>
   <button class="save btn" tabindex="2">Save</button>
   %= include 'powered_by'
 </nav>
-% }
 %= text_area 'paste', placeholder => $placeholder, tabindex => 1
 % end
 @@ chart.html.ep
-% if ($embed =~ /menu/) {
+% if ($embed =~ /nav/) {
 <nav>
   %= link_to 'New', 'pastebin', class => 'btn'
   %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id), class => 'btn'
@@ -321,6 +320,7 @@ try {
   % }
 % }
 @@ show.html.ep
+% if ($embed =~ /nav/) {
 <nav>
   %= link_to 'New', 'pastebin', class => 'btn'
   %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id), class => 'btn'
@@ -328,6 +328,7 @@ try {
   %= link_to 'Graph', url_for('chart'), class => 'btn' if $enable_charts
   %= include 'powered_by'
 </nav>
+% }
 <pre class="prettyprint linenums"><%= $error || $paste %></pre>
 @@ powered_by.html.ep
 <a class="btn powered-by" href="https://metacpan.org/pod/App::mojopaste#DESCRIPTION" title="Get mojopaste">Powered by Mojopaste</a>
