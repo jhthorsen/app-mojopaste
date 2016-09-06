@@ -36,49 +36,7 @@ environment variable:
 
   $ PASTE_ENABLE_CHARTS=1 script/mojopaste daemon;
 
-The input chart data can be given as JSON or CSV:
-
-=over 2
-
-=item * Raw morris.js arguments
-
-Example:
-
-  {
-    "data": [
-      { "x": "2015-02-04 15:03", "a": 120, "b": 90 },
-      { "x": "2015-03-14", "a": 75, "b": 65 },
-      { "x": "2015-04", "a": 100, "b": 40 }
-    ],
-    "xkey": "x",
-    "ykeys": ["a", "b"],
-    "labels": ["Series A", "Series B"]
-  }
-
-"xkey" default to "x".
-"ykeys" default to the rest of the keys in the first element in "data",
-excluding xkey.
-"labels" default to "ykeys".
-
-See L<http://morrisjs.github.io/morris.js/lines.html> for more details.
-
-Note that by installing L<JSON.pm|JSON> the input format can be less strict,
-allowing JavaScript notation instead of strict JSON.
-
-=item * Just data
-
-  [
-    // comments are allowed
-    # both "#" and "//" can be used anywhere, but on a line by itself
-    { "x": "2015-02-04 15:03", "a": 120, "b": 90 },
-    { "x": "2015-03-14", "a": 75, "b": 65 },
-    { "x": "2015-04", "a": 100, "b": 40 }
-  ]
-
-This input format takes just an JSON array and will use that as "data".
-The rest will use the default value rules from above.
-
-=item * CSV data
+The input chart data must be valid CSV:
 
 CSV data is similar to L</Just data> above, except the first line is used as
 "xkey,ykey1,ykey2,...". Example:
@@ -90,8 +48,6 @@ CSV data is similar to L</Just data> above, except the first line is used as
   2015-04,100,40
 
 CSV input data require L<Text::CSV> to be installed.
-
-=back
 
 =head2 Embedding
 

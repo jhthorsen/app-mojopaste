@@ -2,6 +2,7 @@ Revision history for perl distribution App-mojopaste
 
 0.22 Not Released
  - Will never allow robots
+ - Will only graph csv data
 
 0.21 2016-06-30T14:44:51+0200
  - Change default paste directory

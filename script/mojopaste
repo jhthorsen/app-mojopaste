@@ -6,8 +6,6 @@ use File::Path ();
 use File::Spec;
 use Mojo::JSON 'true';
 
-use constant HUMAN_JSON => eval 'require JSON::Syck;JSON::Syck->new->utf8(1)->relaxed(1)->allow_barekey(1)' || 0;
-
 plugin 'config' if $ENV{MOJO_CONFIG};
 
 app->defaults(
@@ -102,6 +100,8 @@ get
   '/:paste_id/chart' => {layout => 'mojopaste'},
   sub {
   my $c = shift;
+  my $chart = {element => 'chart', data => [], hideHover => true, resize => true};
+  my ($heading, $description, $error) = ('', '', '');
 
   $c->delay(
     sub { $c->paste(undef, shift->begin) },
@@ -109,54 +109,18 @@ get
       my ($delay, $err, $paste) = @_;
       return $c->no_such_paste($err) if $err;
 
-      my ($heading, $description) = ('', '');
-
       while ($paste =~ s!^\s*(?://|\#)(.*)!!m) {
         $description .= $1 if $heading;
         $heading ||= $1;
       }
 
-      my @lines = grep { $_ =~ /\S/ } split /\r?\n/, $paste;
-      my $chart = {data => [], element => 'chart', hideHover => true, resize => true};
-      my $error;
+      eval {
+        _chart($chart, grep { $_ =~ /\S/ } split /\r?\n/, $paste);
+      } or do {
+        $error = $@ || 'Unknown error';
+        $error =~ s!\s*at .*? line \d+.*!!s;
+      };
 
-      if (!@lines) {
-        1;    # nothing in, nothing out
-      }
-      elsif ($lines[0] =~ /^\s*\[/s) {    # morris data
-        eval { $chart->{data} = HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines"); }
-          or do {
-          $c->app->log->warn($error = "Could not parse chart data: $@");
-          };
-      }
-      elsif ($lines[0] =~ /^\s*\{/s) {    # morris arguments
-        eval { $chart = HUMAN_JSON ? HUMAN_JSON()->decode("@lines") : Mojo::JSON::decode_json("@lines"); } or do {
-          $c->app->log->warn($error = "Could not parse chart arguments: $@");
-        };
-      }
-      else {                              # csv
-        eval 'require Text::CSV;1' or return $c->render(text => 'Text::CSV is required.');
-        my $csv = Text::CSV->new;
-
-        $csv->parse(shift @lines);        # heading
-        $chart->{ykeys} = [$csv->fields];
-        $chart->{xkey}  = shift @{$chart->{ykeys}};
-
-        while (@lines) {
-          unless ($csv->parse(shift @lines)) {
-            $c->app->log->warn($error = "Could not parse CSV data: " . $csv->error_input);
-            last;
-          }
-          my @row = $csv->fields or next;
-          push @{$chart->{data}}, {$chart->{xkey} => shift(@row), map { ($_ => 0 + shift @row) } @{$chart->{ykeys}}};
-        }
-      }
-
-      $chart->{xkey}   ||= 'x';
-      $chart->{ykeys}  ||= _cols($chart->{xkey}, $chart->{data});
-      $chart->{labels} ||= $chart->{ykeys};
-
-      $error =~ s!at .*? line \d+$!! if $error;
       $c->stash(embed => $c->param('embed')) if $c->param('embed');
       $c->render(chart => $chart, description => $description // '', error => $error, heading => $heading);
     }
@@ -165,16 +129,25 @@ get
 
 app->start;
 
-sub _cols {
-  my ($skip, $rows) = @_;
-  my %cols;
+sub _chart {
+  eval 'require Text::CSV;1' or die 'Run "cpanm Text::CSV" to install missing dependency.';
 
-  for my $row (@$rows) {
-    $cols{$_} = 1 for keys %$row;
+  my $chart = shift;
+  my $csv   = Text::CSV->new;
+
+  $csv->parse(shift @_);    # heading
+  $chart->{ykeys}  = [$csv->fields];
+  $chart->{xkey}   = shift @{$chart->{ykeys}};
+  $chart->{labels} = $chart->{ykeys};
+
+  while (@_) {
+    die $csv->error_input unless $csv->parse(shift @_);
+    my @row = $csv->fields or next;
+    push @{$chart->{data}}, {$chart->{xkey} => shift(@row), map { ($_ => 0 + shift @row) } @{$chart->{ykeys}}};
   }
 
-  delete $cols{$skip};
-  return [sort keys %cols];
+  die 'Could not parse CSV data.' unless @{$chart->{data}};
+  return $chart;
 }
 
 __DATA__
