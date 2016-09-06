@@ -2,7 +2,7 @@ NAME
     App::mojopaste - Pastebin application
 
 VERSION
-    0.21
+    0.22
 
 DESCRIPTION
     Mojopaste is a pastebin application. There's about one million of these
@@ -24,56 +24,18 @@ DESCRIPTION
 
       $ PASTE_ENABLE_CHARTS=1 script/mojopaste daemon;
 
-    The input chart data can be given as JSON or CSV:
+    The input chart data must be valid CSV:
 
-    * Raw morris.js arguments
+    CSV data is similar to "Just data" above, except the first line is used
+    as "xkey,ykey1,ykey2,...". Example:
 
-      Example:
+      # Can have comments in CSV input as well
+      x,a,b
+      2015-02-04 15:03,120,90
+      2015-03-14,75,65
+      2015-04,100,40
 
-        {
-          "data": [
-            { "x": "2015-02-04 15:03", "a": 120, "b": 90 },
-            { "x": "2015-03-14", "a": 75, "b": 65 },
-            { "x": "2015-04", "a": 100, "b": 40 }
-          ],
-          "xkey": "x",
-          "ykeys": ["a", "b"],
-          "labels": ["Series A", "Series B"]
-        }
-
-      "xkey" default to "x". "ykeys" default to the rest of the keys in the
-      first element in "data", excluding xkey. "labels" default to "ykeys".
-
-      See <http://morrisjs.github.io/morris.js/lines.html> for more details.
-
-      Note that by installing JSON.pm the input format can be less strict,
-      allowing JavaScript notation instead of strict JSON.
-
-    * Just data
-
-        [
-          // comments are allowed
-          # both "#" and "//" can be used anywhere, but on a line by itself
-          { "x": "2015-02-04 15:03", "a": 120, "b": 90 },
-          { "x": "2015-03-14", "a": 75, "b": 65 },
-          { "x": "2015-04", "a": 100, "b": 40 }
-        ]
-
-      This input format takes just an JSON array and will use that as
-      "data". The rest will use the default value rules from above.
-
-    * CSV data
-
-      CSV data is similar to "Just data" above, except the first line is
-      used as "xkey,ykey1,ykey2,...". Example:
-
-        # Can have comments in CSV input as well
-        x,a,b
-        2015-02-04 15:03,120,90
-        2015-03-14,75,65
-        2015-04,100,40
-
-      CSV input data require Text::CSV to be installed.
+    CSV input data require Text::CSV to be installed.
 
   Embedding
     A paste can be embedded in other pages using the query param "embed".
@@ -126,15 +88,11 @@ SYNOPSIS
 
         {
           paste_dir     => '/path/to/paste/dir',
-          allow_robots  => 1, # default is 0
           enable_charts => 1, # default is 0
           hypnotoad => {
             listen => ['http://*:8080'],
           },
         }
-
-      "allow_robots" will disable javascript requirements and allow simple
-      scripts (robots) to use the pastebin without much knowledge.
 
       "enable_charts" is for adding a button which can make a chart of the
       input data using morris.js <http://morrisjs.github.io/morris.js>

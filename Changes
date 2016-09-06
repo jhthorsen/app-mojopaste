@@ -1,6 +1,6 @@
 Revision history for perl distribution App-mojopaste
 
-0.22 Not Released
+0.22 2016-09-06T21:18:39+0200
  - Will never allow robots
  - Will only graph csv data
 
