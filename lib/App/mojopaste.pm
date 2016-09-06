@@ -152,15 +152,11 @@ Example mojopaste.conf:
 
   {
     paste_dir     => '/path/to/paste/dir',
-    allow_robots  => 1, # default is 0
     enable_charts => 1, # default is 0
     hypnotoad => {
       listen => ['http://*:8080'],
     },
   }
-
-"allow_robots" will disable javascript requirements and allow simple
-scripts (robots) to use the pastebin without much knowledge.
 
 "enable_charts" is for adding a button which can make a chart of the input
 data using L<morris.js|http://morrisjs.github.io/morris.js>

@@ -11,7 +11,6 @@ use constant HUMAN_JSON => eval 'require JSON::Syck;JSON::Syck->new->utf8(1)->re
 plugin 'config' if $ENV{MOJO_CONFIG};
 
 app->defaults(
-  allow_robots  => app->config('allow_robots')  // $ENV{PASTE_ALLOW_ROBOTS},
   enable_charts => app->config('enable_charts') // $ENV{PASTE_ENABLE_CHARTS},
   embed         => 'description,graph,heading,nav',
   error         => '',
@@ -37,7 +36,7 @@ helper paste => sub {
   my $id = shift // $c->stash('paste_id');
 
   return $c->$cb("Hacking attempt: $id", "") if $id =~ m!\W!;
-  return $c->$cb($!, eval { decode "UTF-8", slurp(File::Spec->catfile($paste_dir, $id)) }) unless @_;
+  return $c->$cb($! || $@, eval { decode "UTF-8", slurp(File::Spec->catfile($paste_dir, $id)) }) unless @_;
   spurt encode("UTF-8", $_[0]), File::Spec->catfile($paste_dir, $id);
   $c->$cb("");
 };
@@ -278,7 +277,7 @@ __DATA__
 </body>
 </html>
 @@ pastebin.html.ep
-%= form_for +($allow_robots ? 'pastebin' : 'invalid'), method => 'post', begin
+%= form_for 'invalid', method => 'post', begin
 <nav>
   <button class="save btn" tabindex="2">Save</button>
   %= include 'powered_by'
