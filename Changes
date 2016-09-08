@@ -1,6 +1,6 @@
 Revision history for perl distribution App-mojopaste
 
-0.23 Not Released
+0.23 2016-09-08T20:08:22+0200
  - Fix rendering 404 for paste_not_found() and .txt extension
 
 0.22 2016-09-06T21:18:39+0200
