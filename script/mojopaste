@@ -249,6 +249,8 @@ __DATA__
   %= content
 </body>
 </html>
+@@ layouts/mojopaste.txt.ep
+%= content
 @@ pastebin.html.ep
 %= form_for 'invalid', method => 'post', begin
 <nav>
@@ -304,3 +306,5 @@ try {
 <pre class="prettyprint linenums"><%= $error || $paste %></pre>
 @@ powered_by.html.ep
 <a class="btn powered-by" href="https://metacpan.org/pod/App::mojopaste#DESCRIPTION" title="Get mojopaste">Powered by Mojopaste</a>
+@@ show.txt.ep
+Paste not found: <%= $paste_id %>

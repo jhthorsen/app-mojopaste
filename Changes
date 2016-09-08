@@ -1,5 +1,8 @@
 Revision history for perl distribution App-mojopaste
 
+0.23 Not Released
+ - Fix rendering 404 for paste_not_found() and .txt extension
+
 0.22 2016-09-06T21:18:39+0200
  - Will never allow robots
  - Will only graph csv data
