@@ -29,24 +29,35 @@ helper no_such_paste => sub {
 };
 
 helper paste => sub {
-  my $cb = pop;
-  my $c  = shift;
-  my $id = shift // $c->stash('paste_id');
+  my $cb    = pop;
+  my $write = @_ == 3;
+  my ($c, $id, $paste) = @_;
 
-  return $c->$cb("Hacking attempt: $id", "") if $id =~ m!\W!;
-  return $c->$cb($! || $@, eval { decode "UTF-8", slurp(File::Spec->catfile($paste_dir, $id)) }) unless @_;
-  spurt encode("UTF-8", $_[0]), File::Spec->catfile($paste_dir, $id);
-  $c->$cb("");
+  if (!$id or $id =~ m!\W!) {
+    return $c->$cb("Hacking attempt! paste_id=($id)", "");
+  }
+
+  local ($!, $@);
+  eval {
+    if ($write) {
+      spurt(encode('UTF-8', $paste), File::Spec->catfile($paste_dir, $id));
+    }
+    else {
+      $paste = decode('UTF-8', slurp(File::Spec->catfile($paste_dir, $id)));
+    }
+  };
+
+  return $c->$cb($@ || $!, $paste);
 };
 
 get '/' => {layout => 'mojopaste'} => sub {
   my $c = shift;
   return unless my $id = $c->param('edit');
   return $c->delay(
-    sub { $c->paste($id, shift->begin) },
+    sub { $c->paste($id => shift->begin) },
     sub {
       my ($delay, $err, $paste) = @_;
-      return $c->no_such_paste($err) if $err;
+      return $c->no_such_paste($err || 'Could not find paste') if $err or !$paste;
       return $c->param(paste => $paste)->render;
     },
   );
@@ -63,7 +74,7 @@ post
     unless $paste =~ /\w/;
   my $id = substr Mojo::Util::md5_sum($$ . time . $ID++), 0, 12;
   $c->delay(
-    sub { $c->paste($id, $paste, shift->begin) },
+    sub { $c->paste($id => $paste, shift->begin) },
     sub {
       my ($delay, $err) = @_;
       die $err if $err;
@@ -77,11 +88,11 @@ get '/:paste_id', sub {
   my $format = $c->stash('format') || '';
 
   $c->delay(
-    sub { $c->paste(undef, shift->begin) },
+    sub { $c->paste($c->stash('paste_id'), shift->begin) },
     sub {
       my ($delay, $err, $paste) = @_;
-      if ($err) {
-        $c->no_such_paste($err);
+      if ($err or !$paste) {
+        $c->no_such_paste($err || 'Could not find paste');
       }
       elsif ($c->param('raw') or $format eq 'txt') {
         $c->res->headers->content_type('text/plain; charset=utf-8');
@@ -104,10 +115,10 @@ get
   my ($heading, $description, $error) = ('', '', '');
 
   $c->delay(
-    sub { $c->paste(undef, shift->begin) },
+    sub { $c->paste($c->stash('paste_id'), shift->begin) },
     sub {
       my ($delay, $err, $paste) = @_;
-      return $c->no_such_paste($err) if $err;
+      return $c->no_such_paste($err || "Could not find paste") if $err or !$paste;
 
       while ($paste =~ s!^\s*(?://|\#)(.*)!!m) {
         $description .= $1 if $heading;
