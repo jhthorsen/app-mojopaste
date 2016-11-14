@@ -1,4 +1,5 @@
 BEGIN { $ENV{PASTE_ENABLE_CHARTS} = 1 }
+use lib '.';
 use t::Helper;
 use Mojo::JSON 'true';
 

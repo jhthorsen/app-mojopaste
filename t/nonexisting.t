@@ -1,4 +1,5 @@
 BEGIN { $ENV{PASTE_ENABLE_CHARTS} = 1 }
+use lib '.';
 use t::Helper;
 
 my $t = t::Helper->t;
