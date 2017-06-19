@@ -1,5 +1,9 @@
 Revision history for perl distribution App-mojopaste
 
+0.25 Not Released
+ - Mojolicious has deprecated Mojo::Util::slurp() and spurt()
+ - Fix failing tests
+
 0.24 2016-10-13T10:01:53+0200
  - Writing/reading files are more robust
 

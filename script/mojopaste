@@ -1,10 +1,9 @@
 #!/usr/bin/env perl
 use Mojolicious::Lite;
 
-use Mojo::Util qw(encode decode spurt slurp);
-use File::Path ();
-use File::Spec;
+use Mojo::File 'path';
 use Mojo::JSON 'true';
+use Mojo::Util qw(encode decode);
 
 plugin 'config' if $ENV{MOJO_CONFIG};
 
@@ -40,10 +39,10 @@ helper paste => sub {
   local ($!, $@);
   eval {
     if ($write) {
-      spurt(encode('UTF-8', $paste), File::Spec->catfile($paste_dir, $id));
+      path($paste_dir, $id)->spurt(encode 'UTF-8', $paste);
     }
     else {
-      $paste = decode('UTF-8', slurp(File::Spec->catfile($paste_dir, $id)));
+      $paste = decode 'UTF-8', path($paste_dir, $id)->slurp;
     }
   };
 
