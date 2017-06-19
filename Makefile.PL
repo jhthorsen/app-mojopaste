@@ -6,7 +6,7 @@ WriteMakefile(
   LICENSE       => 'artistic_2',
   ABSTRACT_FROM => 'lib/App/mojopaste.pm',
   VERSION_FROM  => 'lib/App/mojopaste.pm',
-  EXE_FILES     => [qw( script/mojopaste )],
+  EXE_FILES     => [qw(script/mojopaste)],
   META_MERGE    => {
     resources => {
       bugtracker => 'https://github.com/jhthorsen/app-mojopaste/issues',
