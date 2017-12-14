@@ -8,3 +8,4 @@ Dockerfile for run App::mojopaste
 * docker build --no-cache -t mojopaste_v1 .
 * ./docker-run.sh
 * or ./docker-run.sh -d
+* http://localhost:5555
