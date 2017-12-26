@@ -1,5 +1,5 @@
-# Install [docker](https://docs.docker.com/engine/installation/linux/ubuntulinux/)
-# git clone [App::mojopaste](https://github.com/jhthorsen/app-mojopaste)
+# Install https://docs.docker.com/engine/installation/linux/ubuntulinux/
+# git clone https://github.com/jhthorsen/app-mojopaste
 # cd app-mojopaste
 # docker build --no-cache -t mojopaste .
 # mkdir /some/dir/fordata
