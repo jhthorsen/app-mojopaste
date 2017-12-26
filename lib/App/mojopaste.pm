@@ -88,6 +88,9 @@ Don't have cpanm installed?
   $ curl -L http://cpanmin.us | perl - --sudo App::mojopaste
   $ wget http://cpanmin.us -O - | perl - --sudo App::mojopaste
 
+It is also possible to install L<App::mojopaste> using Docker. Check out
+L<https://hub.docker.com/r/jhthorsen/mojopaste> for more information.
+
 =head1 SYNOPSIS
 
 =over 2
@@ -118,10 +121,6 @@ Example mojopaste.conf:
 data using L<morris.js|http://morrisjs.github.io/morris.js>
 
 Check out L<Mojo::Server::Hypnotoad> for more hypnotoad options.
-
-=item * Run by Docker
-
-    See information in Dockerfile
 
 =back
 
