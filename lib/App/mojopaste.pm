@@ -119,6 +119,10 @@ data using L<morris.js|http://morrisjs.github.io/morris.js>
 
 Check out L<Mojo::Server::Hypnotoad> for more hypnotoad options.
 
+=item * Run by Docker
+
+    See information in Dockerfile
+
 =back
 
 =head1 OTHER PASTEBINS
