@@ -1,4 +1,4 @@
-# Install https://docs.docker.com/engine/installation/linux/ubuntulinux/
+# Install docker https://docs.docker.com/engine/installation/linux/ubuntulinux/
 # git clone https://github.com/jhthorsen/app-mojopaste
 # cd app-mojopaste
 # docker build --no-cache -t mojopaste .
