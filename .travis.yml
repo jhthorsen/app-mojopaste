@@ -1,5 +1,6 @@
 language: perl
 perl:
+  - "5.26"
   - "5.20"
   - "5.16"
 install:
