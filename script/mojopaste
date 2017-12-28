@@ -1,11 +1,59 @@
 #!/usr/bin/env perl
-use Mojolicious::Lite;
+package App::mojopaste::Backend::File;
+use Mojo::Base 'Mojolicious::Plugin';
 
 use Mojo::File 'path';
-use Mojo::JSON 'true';
 use Mojo::Util qw(encode decode);
 
+my $ID = 0;
+
+sub register {
+  my ($self, $app, $config) = @_;
+  my $dir = $app->config('paste_dir');
+  path($dir)->make_path unless -d $dir;
+  $app->helper('paste.load' => sub { _load($dir, @_) });
+  $app->helper('paste.save' => sub { _save($dir, @_) });
+}
+
+sub _load {
+  my ($dir, $c, $id, $cb) = @_;
+  my @res = ('', '');
+
+  eval {
+    die "Hacking attempt! paste_id=($id)" if !$id or $id =~ m!\W!;
+    $res[1] = decode 'UTF-8', path($dir, $id)->slurp;
+  } or do {
+    $res[0] = $@ || 'Paste not found';
+  };
+
+  Mojo::IOLoop->next_tick(sub { $c->$cb(@res) });
+  return $c;
+}
+
+sub _save {
+  my ($dir, $c, $text, $cb) = @_;
+  my $id = substr Mojo::Util::md5_sum($$ . time . $ID++), 0, 12;
+  my @res = ('', '');
+
+  eval {
+    path($dir, $id)->spurt(encode 'UTF-8', $text);
+    $res[1] = $id;
+  } or do {
+    $res[0] = $@ || 'Unknown error';
+  };
+
+  Mojo::IOLoop->next_tick(sub { $c->$cb(@res) });
+  return $c;
+}
+
+package main;
+use Mojolicious::Lite;
+
+use Mojo::JSON 'true';
+
 plugin 'config' if $ENV{MOJO_CONFIG};
+app->config->{backend}   ||= $ENV{PASTE_BACKEND} || 'File';
+app->config->{paste_dir} ||= $ENV{PASTE_DIR}     || 'paste';
 
 app->defaults(
   enable_charts => app->config('enable_charts') // $ENV{PASTE_ENABLE_CHARTS},
@@ -17,9 +65,8 @@ app->defaults(
   title         => 'Mojopaste',
 );
 
-my $ID = 0;
-my $paste_dir = app->config('paste_dir') || $ENV{PASTE_DIR} || 'paste';
--d $paste_dir or File::Path::mkpath($paste_dir) or die "mkpath $paste_dir: $!";
+my $backend = app->config('backend');
+plugin $backend =~ /::/ ? $backend : "App::mojopaste::Backend::$backend";
 
 helper no_such_paste => sub {
   my ($c, $err) = @_;
@@ -38,33 +85,11 @@ helper set_title => sub {
   $c->stash(title => "$prefix - $suffix");
 };
 
-helper paste => sub {
-  my $cb    = pop;
-  my $write = @_ == 3;
-  my ($c, $id, $paste) = @_;
-
-  if (!$id or $id =~ m!\W!) {
-    return $c->$cb("Hacking attempt! paste_id=($id)", "");
-  }
-
-  local ($!, $@);
-  eval {
-    if ($write) {
-      path($paste_dir, $id)->spurt(encode 'UTF-8', $paste);
-    }
-    else {
-      $paste = decode 'UTF-8', path($paste_dir, $id)->slurp;
-    }
-  };
-
-  return $c->$cb($@ || $!, $paste);
-};
-
 get '/' => {layout => 'mojopaste'} => sub {
   my $c = shift;
   return $c->set_title("Create new paste") unless my $id = $c->param('edit');
   return $c->delay(
-    sub { $c->paste($id => shift->begin) },
+    sub { $c->paste->load($id => shift->begin) },
     sub {
       my ($delay, $err, $paste) = @_;
       return $c->no_such_paste($err || 'Could not find paste') if $err or !$paste;
@@ -81,13 +106,14 @@ post
   my $c = shift;
   my $paste = $c->param('paste') || '';
 
-  return $c->render('pastebin', placeholder => 'You neeed to enter some characters!', status => 400)
-    unless $paste =~ /\w/;
-  my $id = substr Mojo::Util::md5_sum($$ . time . $ID++), 0, 12;
+  unless ($paste =~ /\w/) {
+    return $c->render('pastebin', placeholder => 'You neeed to enter some characters!', status => 400);
+  }
+
   $c->delay(
-    sub { $c->paste($id => $paste, shift->begin) },
+    sub { $c->paste->save($paste, shift->begin) },
     sub {
-      my ($delay, $err) = @_;
+      my ($delay, $err, $id) = @_;
       die $err if $err;
       $c->redirect_to('show', paste_id => $id);
     },
@@ -99,7 +125,7 @@ get '/:paste_id', sub {
   my $format = $c->stash('format') || '';
 
   $c->delay(
-    sub { $c->paste($c->stash('paste_id'), shift->begin) },
+    sub { $c->paste->load($c->stash('paste_id'), shift->begin) },
     sub {
       my ($delay, $err, $paste) = @_;
 
@@ -128,7 +154,7 @@ get
   my ($heading, $description, $error) = ('', '', '');
 
   $c->delay(
-    sub { $c->paste($c->stash('paste_id'), shift->begin) },
+    sub { $c->paste->load($c->stash('paste_id'), shift->begin) },
     sub {
       my ($delay, $err, $paste) = @_;
       return $c->no_such_paste($err || "Could not find paste") if $err or !$paste;
