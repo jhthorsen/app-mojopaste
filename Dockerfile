@@ -22,8 +22,9 @@ RUN apt-get update \
   && rm -r /var/lib/apt/*
 RUN cpanm Text::CSV App::mojopaste
 
+ENV MOJO_MODE production
 ENV PASTE_DIR /app/data
 ENV PASTE_ENABLE_CHARTS 1
+EXPOSE 8080
 
 ENTRYPOINT ["mojopaste", "prefork", "-l", "http://*:8080"]
-
