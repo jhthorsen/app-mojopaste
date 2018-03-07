@@ -30,10 +30,10 @@ HERE
 $t->post_ok('/', form => {paste => $raw, p => 1})->status_is(302);
 $file = $t->tx->res->headers->location =~ m!/(\w+)$! ? $1 : 'nope';
 
-$t->get_ok("/$file/chart")->status_is(200)->content_like(qr{jquery\.min\.js})->content_like(qr{morris\.css})
-  ->content_like(qr{morris\.min\.js})->content_like(qr{raphael-min\.js})->element_exists('div[id="chart"]')
-  ->element_exists('nav')->text_like('h2', qr{Some cool header}, 'header')
-  ->text_like('p', qr{A wonderful description\.}, 'description');
+$t->get_ok("/$file/chart")->status_is(200)->text_is(title => 'Some cool header - Mojopaste graph')
+  ->content_like(qr{jquery\.min\.js})->content_like(qr{morris\.css})->content_like(qr{morris\.min\.js})
+  ->content_like(qr{raphael-min\.js})->element_exists('div[id="chart"]')->element_exists('nav')
+  ->text_like('h2', qr{Some cool header}, 'header')->text_like('p', qr{A wonderful description\.}, 'description');
 
 $json = $t->tx->res->body =~ m!new Morris\.Line\(([^\)]+)\)! ? Mojo::JSON::decode_json($1) : undef;
 is_deeply(

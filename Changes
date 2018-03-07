@@ -1,6 +1,7 @@
 Revision history for perl distribution App-mojopaste
 
 0.26 Not Released
+ - Add title that describe which paste you look at
  - Fix "...did you mean do "./script/mojopaste"? at t/config.t line 10."
 
 0.25 2017-06-20T00:20:46+0200

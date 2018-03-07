@@ -13,6 +13,7 @@ app->defaults(
   error         => '',
   paste         => '',
   placeholder   => 'Enter your text here and then press the "Save" button above.',
+  site_name     => $ENV{MOJOPASTE_SITE_NAME} || 'Mojopaste',
   title         => 'Mojopaste',
 );
 
@@ -25,6 +26,16 @@ helper no_such_paste => sub {
   $c->app->log->debug("no_such_paste: $err");
   $c->stash($_ => 'Could not find paste') for qw(error heading title);
   $c->render(description => '', layout => 'mojopaste', status => 404);
+};
+
+helper set_title => sub {
+  my ($c, $prefix, $suffix) = @_;
+  my $site_name = $c->stash('site_name');
+  $suffix = $suffix ? "$site_name $suffix" : $site_name;
+  $prefix =~ s![\n\r]+! !g;
+  $prefix =~ s!^\W+!!g;
+  $prefix = substr $prefix, 0, 56 - length $suffix;
+  $c->stash(title => "$prefix - $suffix");
 };
 
 helper paste => sub {
@@ -51,13 +62,14 @@ helper paste => sub {
 
 get '/' => {layout => 'mojopaste'} => sub {
   my $c = shift;
-  return unless my $id = $c->param('edit');
+  return $c->set_title("Create new paste") unless my $id = $c->param('edit');
   return $c->delay(
     sub { $c->paste($id => shift->begin) },
     sub {
       my ($delay, $err, $paste) = @_;
       return $c->no_such_paste($err || 'Could not find paste') if $err or !$paste;
-      return $c->param(paste => $paste)->render;
+      $c->set_title(substr($paste, 0, 80), 'edit');
+      $c->param(paste => $paste)->render;
     },
   );
   },
@@ -90,6 +102,7 @@ get '/:paste_id', sub {
     sub { $c->paste($c->stash('paste_id'), shift->begin) },
     sub {
       my ($delay, $err, $paste) = @_;
+
       if ($err or !$paste) {
         $c->no_such_paste($err || 'Could not find paste');
       }
@@ -98,6 +111,7 @@ get '/:paste_id', sub {
         $c->render(text => $paste);
       }
       else {
+        $c->set_title(substr($paste, 0, 80));
         $c->res->headers->header('X-Plain-Text-URL' => $c->url_for(format => 'txt')->userinfo(undef)->to_abs);
         $c->stash(embed => $c->param('embed')) if $c->param('embed');
         $c->render(layout => 'mojopaste', paste => $paste);
@@ -131,6 +145,7 @@ get
         $error =~ s!\s*at .*? line \d+.*!!s;
       };
 
+      $c->set_title($heading || $description || substr($paste, 0, 80), 'graph');
       $c->stash(embed => $c->param('embed')) if $c->param('embed');
       $c->render(chart => $chart, description => $description // '', error => $error, heading => $heading);
     }
