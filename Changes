@@ -1,7 +1,9 @@
 Revision history for perl distribution App-mojopaste
 
-0.26 Not Released
+0.26 2018-04-21T10:37:22+0200
  - Add title that describe which paste you look at
+ - Add support for pluggable backends #14
+ - Change Dockerfile to pull from github.com/jhthorsen/app-mojopaste instead of cpan
  - Fix "...did you mean do "./script/mojopaste"? at t/config.t line 10."
 
 0.25 2017-06-20T00:20:46+0200
