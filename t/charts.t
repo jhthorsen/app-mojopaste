@@ -3,8 +3,6 @@ use lib '.';
 use t::Helper;
 use Mojo::JSON 'true';
 
-plan skip_all => 'Text::CSV missing' unless eval 'require Text::CSV; 1';
-
 my $t = t::Helper->t;
 my ($raw, $file, $json);
 

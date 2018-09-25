@@ -4,6 +4,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 
 use Mojo::File 'path';
 use Mojo::Util qw(encode decode);
+use Text::CSV;
 
 my $ID = 0;
 
@@ -166,8 +167,6 @@ app->defaults('enable_charts') and get(
 app->start;
 
 sub _chart {
-  eval 'require Text::CSV;1' or die 'Run "cpanm Text::CSV" to install missing dependency.';
-
   my $chart = shift;
   my $csv   = Text::CSV->new;
 
