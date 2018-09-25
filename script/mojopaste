@@ -185,6 +185,24 @@ sub _chart {
   return $chart;
 }
 
+=pod
+
+=encoding utf8
+
+=head1 NAME
+
+mojopaste - Pastebin application
+
+=head1 DESCRIPTION
+
+See L<App::mojopaste>.
+
+=head1 AUTHOR
+
+Jan Henning Thorsen - C<jhthorsen@cpan.org>
+
+=cut
+
 __DATA__
 @@ layouts/mojopaste.html.ep
 <!DOCTYPE>
