@@ -1,6 +1,6 @@
 Revision history for perl distribution App-mojopaste
 
-1.00 Not Released
+1.00 2018-09-26T00:00:33+0900
  - Compatible with Mojolicious 8.00
  - Changed from delay to promises
 

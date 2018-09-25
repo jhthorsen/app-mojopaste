@@ -9,7 +9,7 @@ my %WriteMakefileArgs = (
   EXE_FILES      => [qw(script/mojopaste)],
   BUILD_REQUIRES => {},
   TEST_REQUIRES  => {'Test::More' => '0.88'},
-  PREREQ_PM      => {'Mojolicious' => '6.39', 'Text::CSV' => '1.30'},
+  PREREQ_PM      => {'Mojolicious' => '8.00', 'Text::CSV' => '1.30'},
   META_MERGE     => {
     'dynamic_config' => 0,
     'meta-spec'      => {version => 2},
@@ -23,7 +23,7 @@ my %WriteMakefileArgs = (
       },
     },
   },
-  test => {S => (-e 'META.yml' ? 't/*.t' : 't/*.t xt/*.t')},
+  test => {TESTS => (-e 'META.yml' ? 't/*.t' : 't/*.t xt/*.t')},
 );
 
 unless (eval { ExtUtils::MakeMaker->VERSION('6.63_03') }) {
