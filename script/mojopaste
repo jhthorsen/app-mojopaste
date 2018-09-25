@@ -11,39 +11,33 @@ sub register {
   my ($self, $app, $config) = @_;
   my $dir = $app->config('paste_dir');
   path($dir)->make_path unless -d $dir;
-  $app->helper('paste.load' => sub { _load($dir, @_) });
-  $app->helper('paste.save' => sub { _save($dir, @_) });
+  $app->helper('paste.load_p' => sub { _load_p($dir, @_) });
+  $app->helper('paste.save_p' => sub { _save_p($dir, @_) });
 }
 
-sub _load {
-  my ($dir, $c, $id, $cb) = @_;
+sub _load_p {
+  my ($dir, $c, $id) = @_;
   my @res = ('', '');
 
   eval {
     die "Hacking attempt! paste_id=($id)" if !$id or $id =~ m!\W!;
-    $res[1] = decode 'UTF-8', path($dir, $id)->slurp;
+    return Mojo::Promise->new->resolve(decode 'UTF-8', path($dir, $id)->slurp);
   } or do {
-    $res[0] = $@ || 'Paste not found';
+    return Mojo::Promise->new->reject($@ || 'Paste not found');
   };
-
-  Mojo::IOLoop->next_tick(sub { $c->$cb(@res) });
-  return $c;
 }
 
-sub _save {
-  my ($dir, $c, $text, $cb) = @_;
+sub _save_p {
+  my ($dir, $c, $text) = @_;
   my $id = substr Mojo::Util::md5_sum($$ . time . $ID++), 0, 12;
   my @res = ('', '');
 
   eval {
     path($dir, $id)->spurt(encode 'UTF-8', $text);
-    $res[1] = $id;
+    return Mojo::Promise->new->resolve($id);
   } or do {
-    $res[0] = $@ || 'Unknown error';
+    return Mojo::Promise->new->reject($@ || 'Unknown error');
   };
-
-  Mojo::IOLoop->next_tick(sub { $c->$cb(@res) });
-  return $c;
 }
 
 package main;
@@ -82,55 +76,47 @@ helper set_title => sub {
   $prefix =~ s![\n\r]+! !g;
   $prefix =~ s!^\W+!!g;
   $prefix = substr $prefix, 0, 56 - length $suffix;
-  $c->stash(title => "$prefix - $suffix");
+  return $c->stash(title => "$prefix - $suffix");
 };
 
-get '/' => {layout => 'mojopaste'} => sub {
-  my $c = shift;
-  return $c->set_title("Create new paste") unless my $id = $c->param('edit');
-  return $c->delay(
-    sub { $c->paste->load($id => shift->begin) },
-    sub {
-      my ($delay, $err, $paste) = @_;
-      return $c->no_such_paste($err || 'Could not find paste') if $err or !$paste;
+get(
+  '/' => {layout => 'mojopaste'} => sub {
+    my $c = shift;
+
+    return $c->set_title("Create new paste") unless my $id = $c->param('edit');
+    return $c->render_later->paste->load_p($id)->then(sub {
+      return $c->no_such_paste('Could not find paste') unless my $paste = shift;
       $c->set_title(substr($paste, 0, 80), 'edit');
       $c->param(paste => $paste)->render;
-    },
-  );
+    })->catch(sub { $c->no_such_paste(shift) });
   },
-  'pastebin';
+  'index'
+);
 
-post
+post(
   '/' => {layout => 'mojopaste'},
   sub {
-  my $c = shift;
-  my $paste = $c->param('paste') || '';
+    my $c = shift;
+    my $paste = $c->param('paste') || '';
 
-  unless ($paste =~ /\w/) {
-    return $c->render('pastebin', placeholder => 'You neeed to enter some characters!', status => 400);
+    return $c->render('index', placeholder => 'You neeed to enter some characters!', status => 400)
+      unless $paste =~ /\w/;
+    return $c->render_later->paste->save_p($paste)->then(sub {
+      $c->redirect_to('show', paste_id => shift);
+    })->catch(sub { $c->reply->exception(shift) });
   }
+);
 
-  $c->delay(
-    sub { $c->paste->save($paste, shift->begin) },
-    sub {
-      my ($delay, $err, $id) = @_;
-      die $err if $err;
-      $c->redirect_to('show', paste_id => $id);
-    },
-  );
-  };
+get(
+  '/:paste_id',
+  sub {
+    my $c = shift;
+    my $format = $c->stash('format') || '';
 
-get '/:paste_id', sub {
-  my $c = shift;
-  my $format = $c->stash('format') || '';
-
-  $c->delay(
-    sub { $c->paste->load($c->stash('paste_id'), shift->begin) },
-    sub {
-      my ($delay, $err, $paste) = @_;
-
-      if ($err or !$paste) {
-        $c->no_such_paste($err || 'Could not find paste');
+    $c->render_later->paste->load_p($c->stash('paste_id'))->then(sub {
+      my $paste = shift;
+      if (!$paste) {
+        $c->no_such_paste('Could not find paste');
       }
       elsif ($c->param('raw') or $format eq 'txt') {
         $c->res->headers->content_type('text/plain; charset=utf-8');
@@ -142,22 +128,20 @@ get '/:paste_id', sub {
         $c->stash(embed => $c->param('embed')) if $c->param('embed');
         $c->render(layout => 'mojopaste', paste => $paste);
       }
-    },
-  );
-}, 'show';
+    })->catch(sub { $c->no_such_paste(shift) });
+  },
+  'show'
+);
 
-get
+app->defaults('enable_charts') and get(
   '/:paste_id/chart' => {layout => 'mojopaste'},
   sub {
-  my $c = shift;
-  my $chart = {element => 'chart', data => [], hideHover => true, resize => true};
-  my ($heading, $description, $error) = ('', '', '');
+    my $c = shift;
+    my $chart = {element => 'chart', data => [], hideHover => true, resize => true};
+    my ($heading, $description, $error) = ('', '', '');
 
-  $c->delay(
-    sub { $c->paste->load($c->stash('paste_id'), shift->begin) },
-    sub {
-      my ($delay, $err, $paste) = @_;
-      return $c->no_such_paste($err || "Could not find paste") if $err or !$paste;
+    $c->render_later->paste->load_p($c->stash('paste_id'))->then(sub {
+      return $c->no_such_paste('Could not find paste') unless my $paste = shift;
 
       while ($paste =~ s!^\s*(?://|\#)(.*)!!m) {
         $description .= $1 if $heading;
@@ -174,9 +158,10 @@ get
       $c->set_title($heading || $description || substr($paste, 0, 80), 'graph');
       $c->stash(embed => $c->param('embed')) if $c->param('embed');
       $c->render(chart => $chart, description => $description // '', error => $error, heading => $heading);
-    }
-  );
-  }, 'chart' if app->defaults('enable_charts');
+    })->catch(sub { $c->no_such_paste(shift) });
+  },
+  'chart'
+);
 
 app->start;
 
@@ -256,7 +241,7 @@ __DATA__
 
     if (form) {
       document.querySelector('textarea').focus();
-      document.querySelector('.save.btn').onclick = function(e) { form.action = '<%= url_for 'pastebin' %>' };
+      document.querySelector('.save.btn').onclick = function(e) { form.action = '<%= url_for 'index' %>' };
     }
     if (pre && pre.firstChild.nodeValue.length < 50000) {
       prettyPrint();
@@ -302,7 +287,7 @@ __DATA__
 </html>
 @@ layouts/mojopaste.txt.ep
 %= content
-@@ pastebin.html.ep
+@@ index.html.ep
 %= form_for 'invalid', method => 'post', begin
 <nav>
   <button class="save btn" tabindex="2">Save</button>
@@ -313,8 +298,8 @@ __DATA__
 @@ chart.html.ep
 % if ($embed =~ /nav/) {
 <nav>
-  %= link_to 'New', 'pastebin', class => 'btn'
-  %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id), class => 'btn'
+  %= link_to 'New', 'index', class => 'btn'
+  %= link_to 'Edit', url_for('index')->query(edit => $paste_id), class => 'btn'
   %= link_to 'Data', url_for('show', paste_id => $paste_id), class => 'btn'
   %= include 'powered_by'
 </nav>
@@ -347,8 +332,8 @@ try {
 @@ show.html.ep
 % if ($embed =~ /nav/) {
 <nav>
-  %= link_to 'New', 'pastebin', class => 'btn'
-  %= link_to 'Edit', url_for('pastebin')->query(edit => $paste_id), class => 'btn'
+  %= link_to 'New', 'index', class => 'btn'
+  %= link_to 'Edit', url_for('index')->query(edit => $paste_id), class => 'btn'
   %= link_to 'Raw', url_for('show', paste_id => $paste_id, format => 'txt'), class => 'btn'
   %= link_to 'Graph', url_for('chart'), class => 'btn' if $enable_charts
   %= include 'powered_by'

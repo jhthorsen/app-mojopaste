@@ -1,5 +1,9 @@
 Revision history for perl distribution App-mojopaste
 
+1.00 Not Released
+ - Compatible with Mojolicious 8.00
+ - Changed from delay to promises
+
 0.26 2018-04-21T10:37:22+0200
  - Add title that describe which paste you look at
  - Add support for pluggable backends #14
