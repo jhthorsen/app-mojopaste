@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!perl
 package App::mojopaste::Backend::File;
 use Mojo::Base 'Mojolicious::Plugin';
 
