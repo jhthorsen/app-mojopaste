@@ -24,4 +24,4 @@ ENV PASTE_DIR /app/data
 ENV PASTE_ENABLE_CHARTS 1
 EXPOSE 8080
 
-ENTRYPOINT ["/app-mojopaste-master/script/mojopaste", "prefork", "-l", "http://*:8080"]
+ENTRYPOINT ["/usr/bin/perl", "/app-mojopaste-master/script/mojopaste", "prefork", "-l", "http://*:8080"]
