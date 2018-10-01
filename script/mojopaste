@@ -30,7 +30,7 @@ sub _load_p {
 
 sub _save_p {
   my ($dir, $c, $text) = @_;
-  my $id = substr Mojo::Util::md5_sum($$ . time . $ID++), 0, 12;
+  my $id  = substr Mojo::Util::md5_sum($$ . time . $ID++), 0, 12;
   my @res = ('', '');
 
   eval {
@@ -97,7 +97,7 @@ get(
 post(
   '/' => {layout => 'mojopaste'},
   sub {
-    my $c = shift;
+    my $c     = shift;
     my $paste = $c->param('paste') || '';
 
     return $c->render('index', placeholder => 'You neeed to enter some characters!', status => 400)
@@ -111,7 +111,7 @@ post(
 get(
   '/:paste_id',
   sub {
-    my $c = shift;
+    my $c      = shift;
     my $format = $c->stash('format') || '';
 
     $c->render_later->paste->load_p($c->stash('paste_id'))->then(sub {
@@ -137,7 +137,7 @@ get(
 app->defaults('enable_charts') and get(
   '/:paste_id/chart' => {layout => 'mojopaste'},
   sub {
-    my $c = shift;
+    my $c     = shift;
     my $chart = {element => 'chart', data => [], hideHover => true, resize => true};
     my ($heading, $description, $error) = ('', '', '');
 
@@ -171,9 +171,10 @@ sub _chart {
   my $csv   = Text::CSV->new;
 
   $csv->parse(shift @_);    # heading
-  $chart->{ykeys}  = [$csv->fields];
-  $chart->{xkey}   = shift @{$chart->{ykeys}};
-  $chart->{labels} = $chart->{ykeys};
+  $chart->{ykeys}             = [$csv->fields];
+  $chart->{xkey}              = shift @{$chart->{ykeys}};
+  $chart->{labels}            = $chart->{ykeys};
+  $chart->{pointStrokeColors} = '#222';
 
   while (@_) {
     die $csv->error_input unless $csv->parse(shift @_);
@@ -211,28 +212,136 @@ __DATA__
   <title><%= title %></title>
   <meta name="description" content="A Mojolicious powered pastebin">
   <meta name="viewport" content="width=device-width, initial-scale=0.9" />
-  %= stylesheet '//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.css' if stash 'chart';
   %= stylesheet begin
-  html, body, form, text { padding: 0; margin: 0; }
-  body.has-nav { margin-top: 38px; }
-  body, textarea { background: #f8f8f8; }
-  body, textarea, a, .btn { color: #555; font-size: 16px; font-family: 'Helvetica Neue', Helvetica, sans-serif; }
-  h2 { font-size: 1.5em; }
-  h2, p { margin: 20px; }
-  body.has-nav h2 { padding-top: 20px; }
-  nav, .btn { background: #e6e6e6; border: 0 solid #ddd }
-  nav { border-bottom-width: 1px; padding: 0 10px; overflow: hidden; position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
-  textarea, pre, .prettyprint { font-family:Menlo,Bitstream Vera Sans Mono,DejaVu Sans Mono,Monaco,Consolas,monospace; border:0!important, box-sizing: border-box; margin: 0; }
-  body.has-nav textarea, body.has-nav pre { padding: 20px; }
-  textarea { width: 100%; height: 100%; border: 0; outline-offset: 0; outline: 0; display: block; }
-  pre { margin-bottom: 60px; }
-  .btn { background: #ddd; font-size: 14px; line-height: 1.5; text-decoration: none; text-align: center; padding: 7px 12px; margin-right: 3px; vertical-align: middle; display: block; float: left; cursor: pointer; }
-  .btn:hover { background: #d0d0d0; }
-  .btn:focus { background: #ccc; outline: 0; }
-  .powered-by { float: right; display: block; }
+  :root {
+    --root-bg-color: #1d1e19;
+    --root-font-color: #d5d9bc;
+    --root-font-size: 16px;
+    --root-font-family: Menlo, Bitstream Vera Sans Mono, DejaVu Sans Mono, Monaco, Consolas, monospace;
+    --gutter: 2rem;
+    --nav-bg-color: #191a15;
+    --nav-height: 3rem;
+  }
+
+  @media (max-width: 800px) {
+    :root {
+      --gutter: 1rem;
+    }
+  }
+
+  * {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+  }
+
+  html, body, textarea {
+    background: var(--root-bg-color);
+  }
+
+  html, body, textarea, button {
+    font-family: var(--root-font-family);
+    font-size: var(--root-font-size);
+    color: var(--root-font-color);
+  }
+
+  h2 {
+    margin: var(--gutter);
+    margin-bottom: 1rem;
+  }
+
+  p {
+    margin: 1rem var(--gutter);
+  }
+
+  a {
+    color: var(--root-font-color);
+  }
+
+  a:hover,
+  .btn:hover {
+    background-color: #11120f;
+  }
+
+  nav {
+    background: var(--nav-bg-color);
+    position: sticky;
+    top: 0;
+    height: var(--nav-height);
+    box-shadow: -1px 0 0 1px rgba(0, 0, 0, 0.2);
+  }
+
+  .btn,
+  .brand {
+    --padding: 0.4rem;
+
+    background: var(--nav-bg-color);
+    text-decoration: none;
+    line-height: calc(var(--nav-height) - var(--padding) * 2);
+    margin-left: calc(var(--gutter) / 2);
+    padding: var(--padding) calc(var(--gutter) / 2);
+    float: left;
+    display: block;
+    cursor: pointer;
+  }
+
+  .brand {
+    display: block !important;
+  }
+
+  .brand img {
+    height: calc(var(--nav-height) - var(--padding) * 2);
+    vertical-align: bottom;
+  }
+
+  textarea,
+  .pre,
+  .prettyprint {
+    padding: var(--gutter);
+    width: 100vw;
+    max-width: 100vw;
+    overflow: scroll;
+    outline: 0;
+  }
+
+  .has-nav .prettyprint {
+    height: calc(100vh - var(--nav-height));
+  }
+
+  .prettyprint.linenums {
+    padding-left: 0;
+  }
+
+  .linenums {
+    padding-left: 3.5em;
+  }
+
+  @media (min-width: 800px) {
+    .linenums {
+      padding-left: 4.5em;
+    }
+  }
+
+  @media print {
+    nav a,
+    nav .btn {
+      display: none;
+    }
+
+    .prettyprint {
+      white-space: pre-wrap;
+    }
+  }
+
   /*! Color themes for Google Code Prettify | MIT License | github.com/jmblog/color-themes-for-google-code-prettify */
-  .pln{color:#555}ol.linenums{margin-top:0;margin-bottom:0;color:#ccc}li.L0,li.L1,li.L2,li.L3,li.L4,li.L5,li.L6,li.L7,li.L8,li.L9{padding-left:1em;list-style-type:decimal}
-  @media screen{.str{color:#183691}.kwd{color:#a71d5d}.com{color:#969896}.typ{color:#0086b3}.lit{color:#0086b3}.pun{color:#333}.opn{color:#333}.clo{color:#333}.tag{color:navy}.atn{color:#795da3}.atv{color:#183691}.dec{color:#333}.var{color:teal}.fun{color:#900}}
+  .prettyprint{font-family:Menlo,Bitstream Vera Sans Mono,DejaVu Sans Mono,Monaco,Consolas,monospace;border:0!important}.pln{color:#c5c8c6}ol.linenums{margin-top:0;margin-bottom:0;color:#969896}li.L0,li.L1,li.L2,li.L3,li.L4,li.L5,li.L6,li.L7,li.L8,li.L9{list-style-type:decimal}@media screen{.str{color:#b5bd68}.kwd{color:#b294bb}.com{color:#969896}.typ{color:#81a2be}.lit{color:#de935f}.pun{color:#c5c8c6}.opn{color:#c5c8c6}.clo{color:#c5c8c6}.tag{color:#c66}.atn{color:#de935f}.atv{color:#8abeb7}.dec{color:#de935f}.var{color:#c66}.fun{color:#81a2be}}
+
+  .morris-hover{position:absolute;z-index:1000}
+  .morris-hover.morris-default-style{border-radius:10px;padding:6px;color:#666;background:rgba(0,0,0,0.8);font-size:12px;text-align:center}
+  .morris-hover.morris-default-style .morris-hover-row-label{font-weight:bold;margin:0.25em 0}
+  .morris-hover.morris-default-style .morris-hover-point{white-space:nowrap;margin:0.1em 0}
+
   % end
   <script type="text/javascript">
   window.onkeydown = function(e) {
@@ -306,21 +415,11 @@ __DATA__
 %= content
 @@ index.html.ep
 %= form_for 'invalid', method => 'post', begin
-<nav>
-  <button class="save btn" tabindex="2">Save</button>
-  %= include 'powered_by'
-</nav>
+%= include 'nav'
 %= text_area 'paste', placeholder => $placeholder, tabindex => 1
 % end
 @@ chart.html.ep
-% if ($embed =~ /nav/) {
-<nav>
-  %= link_to 'New', 'index', class => 'btn'
-  %= link_to 'Edit', url_for('index')->query(edit => $paste_id), class => 'btn'
-  %= link_to 'Data', url_for('show', paste_id => $paste_id), class => 'btn'
-  %= include 'powered_by'
-</nav>
-% }
+%= include 'nav' if $embed =~ /nav/;
 % if ($heading and $embed =~ /heading/) {
 <h2><%= $heading %></h2>
 % }
@@ -347,17 +446,97 @@ try {
   % }
 % }
 @@ show.html.ep
-% if ($embed =~ /nav/) {
-<nav>
-  %= link_to 'New', 'index', class => 'btn'
-  %= link_to 'Edit', url_for('index')->query(edit => $paste_id), class => 'btn'
-  %= link_to 'Raw', url_for('show', paste_id => $paste_id, format => 'txt'), class => 'btn'
-  %= link_to 'Graph', url_for('chart'), class => 'btn' if $enable_charts
-  %= include 'powered_by'
-</nav>
-% }
+%= include 'nav' if $embed =~ /nav/;
 <pre class="prettyprint linenums"><%= $error || $paste %></pre>
-@@ powered_by.html.ep
-<a class="btn powered-by" href="https://metacpan.org/pod/App::mojopaste#DESCRIPTION" title="Get mojopaste">Powered by Mojopaste</a>
+@@ nav.html.ep
+% my $paste_id = stash 'paste_id';
+<nav>
+  %= link_to 'index', class => 'brand', begin
+    %= image '/images/logo.png', alt => ''
+    <span>Mojopaste</span>
+  % end
+
+  % if ($paste_id) {
+    %= link_to 'New', 'index', class => 'btn'
+    %= link_to 'Edit', url_for('index')->query(edit => $paste_id), class => 'btn'
+
+    % if (exists stash->{chart}) {
+      %= link_to 'Data', url_for('show', paste_id => $paste_id), class => 'btn'
+    % } else {
+      %= link_to 'Raw', url_for('show', paste_id => $paste_id, format => 'txt'), class => 'btn'
+      %= link_to 'Graph', url_for('chart'), class => 'btn' if $enable_charts
+    % }
+
+  % } else {
+    <button class="btn save" tabindex="2">Save</button>
+  % }
+</nav>
 @@ show.txt.ep
 Paste not found: <%= $paste_id %>
+@@ images/logo.png (base64)
+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

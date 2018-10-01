@@ -1,5 +1,17 @@
 Revision history for perl distribution App-mojopaste
 
+1.01 Not Released
+ - Changed layout to "dark mode"
+ - Changed layout to using "modern" CSS technologies, such as var()
+ - Swapped Google Code Prettify style to
+   https://jmblog.github.io/color-themes-for-google-code-prettify/themes/atelier-dune-dark.min.css
+ - Using a modified version of https://commons.wikimedia.org/wiki/File:Gnome-edit-paste.svg
+   as logo, under the CC BY-SA 3.0 license.
+ - Add basic documentation to script #17
+   Contributor: Dan Book
+ - Fix shebang #16
+   Contributor: Dan Book
+
 1.00 2018-09-26T00:00:33+0900
  - Compatible with Mojolicious 8.00
  - Changed from delay to promises
