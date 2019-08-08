@@ -304,6 +304,7 @@ __DATA__
     max-width: 100vw;
     overflow: scroll;
     outline: 0;
+    -webkit-overflow-scrolling: touch;
   }
 
   .has-nav .editor,
