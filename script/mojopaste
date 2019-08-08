@@ -295,8 +295,7 @@ __DATA__
     vertical-align: bottom;
   }
 
-  textarea,
-  .pre,
+  .editor,
   .prettyprint {
     padding: var(--gutter);
     width: 100vw;
@@ -305,6 +304,7 @@ __DATA__
     outline: 0;
   }
 
+  .has-nav .editor,
   .has-nav .prettyprint {
     height: calc(100vh - var(--nav-height));
   }
@@ -356,7 +356,7 @@ __DATA__
       selection.addRange(range);
       e.preventDefault();
     }
-    else if(el = document.querySelector("textarea")) {
+    else if(el = document.querySelector(".editor")) {
       el.select();
       e.preventDefault();
     }
@@ -366,7 +366,7 @@ __DATA__
     var pre = document.querySelector('pre');
 
     if (form) {
-      document.querySelector('textarea').focus();
+      document.querySelector('.editor').focus();
       document.querySelector('.save.btn').onclick = function(e) { form.action = '<%= url_for 'index' %>' };
     }
     if (pre && pre.firstChild.nodeValue.length < 50000) {
@@ -416,7 +416,7 @@ __DATA__
 @@ index.html.ep
 %= form_for 'invalid', method => 'post', begin
 %= include 'nav'
-%= text_area 'paste', placeholder => $placeholder, tabindex => 1
+%= text_area 'paste', placeholder => $placeholder, tabindex => 1, class => 'editor'
 % end
 @@ chart.html.ep
 %= include 'nav' if $embed =~ /nav/;
