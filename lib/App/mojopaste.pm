@@ -1,6 +1,6 @@
 package App::mojopaste;
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 1;
 
@@ -12,7 +12,7 @@ App::mojopaste - Pastebin application
 
 =head1 VERSION
 
-1.00
+1.01
 
 =head1 DESCRIPTION
 

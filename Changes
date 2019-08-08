@@ -1,6 +1,6 @@
 Revision history for perl distribution App-mojopaste
 
-1.01 Not Released
+1.01 2019-08-08T21:25:41+0200
  - Changed layout to "dark mode"
  - Changed layout to using "modern" CSS technologies, such as var()
  - Swapped Google Code Prettify style to
