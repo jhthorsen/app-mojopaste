@@ -51,12 +51,14 @@ app->config->{backend}   ||= $ENV{PASTE_BACKEND} || 'File';
 app->config->{paste_dir} ||= $ENV{PASTE_DIR}     || 'paste';
 
 app->defaults(
+  brand_link    => app->config('brand_link') || $ENV{PASTE_BRAND_LINK} || 'index',
+  brand_logo    => app->config('brand_logo') // $ENV{PASTE_BRAND_LOGO} // '/images/logo.png',
+  brand_name    => app->config('brand_name') // $ENV{PASTE_BRAND_NAME} // 'Mojopaste',
   enable_charts => app->config('enable_charts') // $ENV{PASTE_ENABLE_CHARTS},
   embed         => 'description,graph,heading,nav',
   error         => '',
   paste         => '',
   placeholder   => 'Enter your text here and then press the "Save" button above.',
-  site_name     => $ENV{MOJOPASTE_SITE_NAME} || 'Mojopaste',
   title         => 'Mojopaste',
 );
 
@@ -72,8 +74,8 @@ helper no_such_paste => sub {
 
 helper set_title => sub {
   my ($c, $prefix, $suffix) = @_;
-  my $site_name = $c->stash('site_name');
-  $suffix = $suffix ? "$site_name $suffix" : $site_name;
+  my $brand_name = $c->stash('brand_name') || 'Mojopaste';
+  $suffix = $suffix ? "$brand_name $suffix" : $brand_name;
   $prefix =~ s![\n\r]+! !g;
   $prefix =~ s!^\W+!!g;
   $prefix = substr $prefix, 0, 56 - length $suffix;
@@ -451,9 +453,13 @@ try {
 @@ nav.html.ep
 % my $paste_id = stash 'paste_id';
 <nav>
-  %= link_to 'index', class => 'brand', begin
-    %= image '/images/logo.png', alt => ''
-    <span>Mojopaste</span>
+  %= link_to $brand_link, class => 'brand', begin
+    % if ($brand_logo) {
+      %= image $brand_logo, alt => ''
+    % }
+    % if ($brand_name) {
+      <span><%= $brand_name %></span>
+    % }
   % end
 
   % if ($paste_id) {

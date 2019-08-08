@@ -1,5 +1,8 @@
 Revision history for perl distribution App-mojopaste
 
+1.03 Not Released
+ - Add support for custom branding
+
 1.02 2019-08-08T21:47:21+0200
  - Fix height of textarea
 
