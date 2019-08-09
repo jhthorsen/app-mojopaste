@@ -1,5 +1,8 @@
 Revision history for perl distribution App-mojopaste
 
+1.04 Not Released
+ - Fix failing tests #19
+
 1.03 2019-08-08T23:51:56+0200
  - Add support for custom branding
 

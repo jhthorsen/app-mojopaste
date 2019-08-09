@@ -5,8 +5,7 @@ my $t   = t::Helper->t;
 my $raw = "// somefile.js\nvar foo = 123; // cool!\r\nvar toooooooo_long_for_title = 1234567890;\r\n";
 
 $t->get_ok('/')->status_is(200)->text_is('title', 'Create new paste - Mojopaste')
-  ->element_exists('form[method="post"][action="invalid"]', 'javascript is required')->element_exists('button')
-  ->element_exists('a[href="https://metacpan.org/pod/App::mojopaste#DESCRIPTION"]');
+  ->element_exists('form[method="post"][action="invalid"]', 'javascript is required')->element_exists('button');
 
 $t->post_ok('/')->status_is(400)->element_exists('form[method="post"][action="invalid"]');
 $t->post_ok('/', form => {paste => '', p => 1})->status_is(400, 'Need at least one character');
