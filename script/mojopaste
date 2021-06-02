@@ -112,6 +112,8 @@ post(
 
 get(
   '/:paste_id',
+  [format => ['txt']],
+  {format => undef},
   sub {
     my $c      = shift;
     my $format = $c->stash('format') || '';
