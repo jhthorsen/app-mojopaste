@@ -112,7 +112,7 @@ post(
 
 get(
   '/:paste_id',
-  [format => ['txt']],
+  [format => ['html', 'txt']],
   {format => undef},
   sub {
     my $c      = shift;
