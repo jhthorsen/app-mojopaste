@@ -8,9 +8,10 @@ my %WriteMakefileArgs = (
   ABSTRACT_FROM  => 'lib/App/mojopaste.pm',
   VERSION_FROM   => 'lib/App/mojopaste.pm',
   EXE_FILES      => [qw(script/mojopaste)],
+  OBJECT         => '',
   BUILD_REQUIRES => {},
-  TEST_REQUIRES  => {'Test::More' => '0.88'},
-  PREREQ_PM      => {'Mojolicious' => '8.00', 'Text::CSV' => '1.30'},
+  TEST_REQUIRES  => {'Test::More'  => '0.88'},
+  PREREQ_PM      => {'Mojolicious' => '9.11', 'Text::CSV' => '1.30'},
   META_MERGE     => {
     'dynamic_config' => 0,
     'meta-spec'      => {version => 2},

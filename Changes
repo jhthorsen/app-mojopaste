@@ -1,5 +1,9 @@
 Revision history for perl distribution App-mojopaste
 
+1.05 2021-06-17T07:56:14+0900
+ - Compatible with Mojolicious 9.11
+   Contributor: Dan Book
+
 1.04 2019-08-09T16:37:47+0200
  - Fix failing tests #19
 
