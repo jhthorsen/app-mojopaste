@@ -52,8 +52,8 @@ app->config->{paste_dir} ||= $ENV{PASTE_DIR}     || 'paste';
 
 app->defaults(
   brand_link    => app->config('brand_link') || $ENV{PASTE_BRAND_LINK} || 'index',
-  brand_logo    => app->config('brand_logo') // $ENV{PASTE_BRAND_LOGO} // '/images/logo.png',
-  brand_name    => app->config('brand_name') // $ENV{PASTE_BRAND_NAME} // 'Mojopaste',
+  brand_logo    => app->config('brand_logo')    // $ENV{PASTE_BRAND_LOGO} // '/images/logo.png',
+  brand_name    => app->config('brand_name')    // $ENV{PASTE_BRAND_NAME} // 'Mojopaste',
   enable_charts => app->config('enable_charts') // $ENV{PASTE_ENABLE_CHARTS},
   embed         => 'description,graph,heading,nav',
   error         => '',
@@ -167,6 +167,12 @@ app->defaults('enable_charts') and get(
   },
   'chart'
 );
+
+hook before_dispatch => sub {
+  my $c = shift;
+  return unless $ENV{X_REQUEST_BASE} and my $base = $c->req->headers->header('X-Request-Base');
+  $c->req->url->base(Mojo::URL->new($base));
+};
 
 app->start;
 
