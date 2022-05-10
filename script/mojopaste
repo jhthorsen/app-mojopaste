@@ -99,8 +99,21 @@ get(
 post(
   '/' => {layout => 'mojopaste'},
   sub {
-    my $c     = shift;
-    my $paste = $c->param('paste') || '';
+    my $c      = shift;
+    my $paste  = $c->param('paste') || '';
+    my $upload = $c->req->upload('upload');
+
+    if ($upload and $upload->filename) {
+      $c->log->debug( "Uploading: "
+        . $upload->filename . " ("
+        . $upload->headers->content_type
+        . ")" );
+
+      return $c->render(text => 'Only text files are supported', status => 400)
+        if $upload->headers->content_type !~ /\btext\//i;
+
+      $paste = $upload->asset->slurp;
+    }
 
     return $c->render('index', placeholder => 'You neeed to enter some characters!', status => 400)
       unless $paste =~ /\w/;
@@ -379,6 +392,7 @@ __DATA__
     if (form) {
       document.querySelector('.editor').focus();
       document.querySelector('.save.btn').onclick = function(e) { form.action = '<%= url_for 'index' %>' };
+      document.querySelector('.upload.btn').onchange = function(e) { form.action = '<%= url_for 'index' %>'; form.submit() };
     }
     if (pre && pre.firstChild.nodeValue.length < 50000) {
       prettyPrint();
@@ -425,7 +439,7 @@ __DATA__
 @@ layouts/mojopaste.txt.ep
 %= content
 @@ index.html.ep
-%= form_for 'invalid', method => 'post', begin
+%= form_for 'invalid', method => 'post', (enctype => 'multipart/form-data') => begin
 %= include 'nav'
 %= text_area 'paste', placeholder => $placeholder, tabindex => 1, class => 'editor'
 % end
@@ -484,6 +498,7 @@ try {
 
   % } else {
     <button class="btn save" tabindex="2">Save</button>
+    %= file_field 'upload', id => 'file_upload', class => 'btn upload'
   % }
 </nav>
 @@ show.txt.ep
