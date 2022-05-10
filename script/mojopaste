@@ -193,6 +193,8 @@ get(
       }
       elsif ($c->param('raw') or $format eq 'txt') {
         $c->res->headers->content_type($paste->headers->content_type);
+        my $filename = Mojo::Util::url_escape($paste->filename);
+        $c->res->headers->content_disposition(qq{inline; filename="$filename"});
         $c->reply->asset($paste->asset);
       }
       else {
