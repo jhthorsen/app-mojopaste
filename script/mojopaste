@@ -22,19 +22,66 @@ sub _load_p {
 
   eval {
     die "Hacking attempt! paste_id=($id)" if !$id or $id =~ m!\W!;
-    return Mojo::Promise->new->resolve(decode 'UTF-8', path($dir, $id)->slurp);
+
+    my $path = path($dir, $id);
+    my $meta = {
+      filename     => "$id.txt",
+      content_type => 'text/plain; charset=utf-8',
+    };
+
+    if ( -d $path ) {
+      $meta = Mojo::JSON::decode_json(path($path,'meta')->slurp);
+      $path = path($path, 'content');
+    }
+
+    return Mojo::Promise->new->reject('Paste not found')
+        unless -e $path;
+
+    my $asset = Mojo::Asset::File->new(path => $path);
+
+    my $name = $meta->{filename};
+    if ( $meta->{content_type} =~ /\btext\// ) {
+      # If the file contains combining characters, this will need adjusting.
+      open my $fh, '<:encoding(utf-8)', $path or die "Unable to open file $path: $!";
+      $fh->read($name, 80) or die "Unable to read from $path: $!";
+      close $fh or die "Unable to close file $path: $!";
+    }
+
+    my $headers = Mojo::Headers->new;
+    $headers->content_type( $meta->{content_type} );
+
+    my $content = Mojo::Upload->new(
+      name     => $name,
+      filename => $meta->{filename},
+      headers  => $headers,
+      asset    => $asset,
+    );
+
+    return Mojo::Promise->new->resolve($content);
   } or do {
     return Mojo::Promise->new->reject($@ || 'Paste not found');
   };
 }
 
 sub _save_p {
-  my ($dir, $c, $text) = @_;
+  my ($dir, $c, $paste) = @_;
   my $id  = substr Mojo::Util::md5_sum($$ . time . $ID++), 0, 12;
   my @res = ('', '');
 
   eval {
-    path($dir, $id)->spurt(encode 'UTF-8', $text);
+    if (ref $paste) {
+      my $subdir = path($dir, $id);
+      $subdir->make_path unless -d $subdir;
+      path($subdir, 'meta')->spurt(
+        Mojo::JSON::encode_json({
+          filename     => path($paste->filename)->basename,
+          content_type => $paste->headers->content_type,
+        }));
+      $paste->move_to(path($subdir,'content'));
+    }
+    else {
+      path($dir, $id)->spurt(encode 'UTF-8', $paste);
+    }
     return Mojo::Promise->new->resolve($id);
   } or do {
     return Mojo::Promise->new->reject($@ || 'Unknown error');
@@ -72,6 +119,15 @@ helper no_such_paste => sub {
   $c->render(description => '', layout => 'mojopaste', status => 404);
 };
 
+helper slurp_paste => sub {
+  my ($c, $paste) = @_;
+
+  my ($charset) = $paste->headers->content_type =~ /charset=([^\s;]+)/;
+  $charset ||= 'UTF-8';
+
+  return Mojo::Util::decode($charset, $paste->asset->slurp)
+};
+
 helper set_title => sub {
   my ($c, $prefix, $suffix) = @_;
   my $brand_name = $c->stash('brand_name') || 'Mojopaste';
@@ -89,8 +145,10 @@ get(
     return $c->set_title("Create new paste") unless my $id = $c->param('edit');
     return $c->render_later->paste->load_p($id)->then(sub {
       return $c->no_such_paste('Could not find paste') unless my $paste = shift;
-      $c->set_title(substr($paste, 0, 80), 'edit');
-      $c->param(paste => $paste)->render;
+      return $c->no_such_paste('Cannot edit non-text pastes')
+        unless $paste->headers->content_type =~ /\btext\//;
+      $c->set_title($paste->name, 'edit');
+      $c->param( paste => $c->slurp_paste($paste) )->render;
     })->catch(sub { $c->no_such_paste(shift) });
   },
   'index'
@@ -109,10 +167,7 @@ post(
         . $upload->headers->content_type
         . ")" );
 
-      return $c->render(text => 'Only text files are supported', status => 400)
-        if $upload->headers->content_type !~ /\btext\//i;
-
-      $paste = $upload->asset->slurp;
+      $paste = $upload;
     }
 
     return $c->render('index', placeholder => 'You neeed to enter some characters!', status => 400)
@@ -137,14 +192,23 @@ get(
         $c->no_such_paste('Could not find paste');
       }
       elsif ($c->param('raw') or $format eq 'txt') {
-        $c->res->headers->content_type('text/plain; charset=utf-8');
-        $c->render(text => $paste);
+        $c->res->headers->content_type($paste->headers->content_type);
+        $c->reply->asset($paste->asset);
       }
       else {
-        $c->set_title(substr($paste, 0, 80));
-        $c->res->headers->header('X-Plain-Text-URL' => $c->url_for(format => 'txt')->userinfo(undef)->to_abs);
+        $c->set_title($paste->name);
         $c->stash(embed => $c->param('embed')) if $c->param('embed');
-        $c->render(layout => 'mojopaste', paste => $paste);
+
+        if ($paste->headers->content_type =~ /\btext\//) {
+          $c->res->headers->header('X-Plain-Text-URL' => $c->url_for(format => 'txt')->userinfo(undef)->to_abs);
+          $c->render(
+            layout => 'mojopaste',
+            paste  => $c->slurp_paste($paste),
+          );
+        }
+        else {
+          $c->render( layout => 'mojopaste', only_raw => 1 );
+        }
       }
     })->catch(sub { $c->no_such_paste(shift) });
   },
@@ -160,20 +224,23 @@ app->defaults('enable_charts') and get(
 
     $c->render_later->paste->load_p($c->stash('paste_id'))->then(sub {
       return $c->no_such_paste('Could not find paste') unless my $paste = shift;
+      return $c->no_such_paste('Cannot chart non-text pastes')
+        unless $paste->headers->content_type =~ /\btext\//;
 
-      while ($paste =~ s!^\s*(?://|\#)(.*)!!m) {
+      my $content = $c->slurp_paste($paste);
+      while ($content =~ s!^\s*(?://|\#)(.*)!!m) {
         $description .= $1 if $heading;
         $heading ||= $1;
       }
 
       eval {
-        _chart($chart, grep { $_ =~ /\S/ } split /\r?\n/, $paste);
+        _chart($chart, grep { $_ =~ /\S/ } split /\r?\n/, $content);
       } or do {
         $error = $@ || 'Unknown error';
         $error =~ s!\s*at .*? line \d+.*!!s;
       };
 
-      $c->set_title($heading || $description || substr($paste, 0, 80), 'graph');
+      $c->set_title($heading || $description || $paste->name, 'graph');
       $c->stash(embed => $c->param('embed')) if $c->param('embed');
       $c->render(chart => $chart, description => $description // '', error => $error, heading => $heading);
     })->catch(sub { $c->no_such_paste(shift) });
@@ -439,10 +506,16 @@ __DATA__
 @@ layouts/mojopaste.txt.ep
 %= content
 @@ index.html.ep
-%= form_for 'invalid', method => 'post', (enctype => 'multipart/form-data') => begin
-%= include 'nav'
-%= text_area 'paste', placeholder => $placeholder, tabindex => 1, class => 'editor'
-% end
+% if (stash->{only_raw}) {
+  % stash->{embed} = 'nav';
+  %= include 'show'
+% }
+% else {
+  %= form_for 'invalid', method => 'post', (enctype => 'multipart/form-data') => begin
+  %= include 'nav'
+  %= text_area 'paste', placeholder => $placeholder, tabindex => 1, class => 'editor'
+  % end
+% }
 @@ chart.html.ep
 %= include 'nav' if $embed =~ /nav/;
 % if ($heading and $embed =~ /heading/) {
@@ -472,7 +545,14 @@ try {
 % }
 @@ show.html.ep
 %= include 'nav' if $embed =~ /nav/;
-<pre class="prettyprint linenums"><%= $error || $paste %></pre>
+% if (stash->{only_raw}) {
+  <div class="prettyprint">Non textual paste, <%=
+    link_to 'view raw paste', url_for('show', paste_id => stash->{paste_id} )->query( raw => 1 )
+  %>.</div>
+  % }
+% else {
+  <pre class="prettyprint linenums"><%= $error || $paste %></pre>
+% }
 @@ nav.html.ep
 % my $paste_id = stash 'paste_id';
 <nav>
@@ -487,15 +567,19 @@ try {
 
   % if ($paste_id) {
     %= link_to 'New', 'index', class => 'btn'
-    %= link_to 'Edit', url_for('index')->query(edit => $paste_id), class => 'btn'
-
-    % if (exists stash->{chart}) {
-      %= link_to 'Data', url_for('show', paste_id => $paste_id), class => 'btn'
-    % } else {
-      %= link_to 'Raw', url_for('show', paste_id => $paste_id, format => 'txt'), class => 'btn'
-      %= link_to 'Graph', url_for('chart'), class => 'btn' if $enable_charts
+    % if (stash->{only_raw}) {
+        %= link_to 'Raw', url_for('show', paste_id => $paste_id )->query( raw => 1 ), class => 'btn'
     % }
+    % else {
+      %= link_to 'Edit', url_for('index')->query(edit => $paste_id), class => 'btn'
 
+      % if (exists stash->{chart}) {
+        %= link_to 'Data', url_for('show', paste_id => $paste_id), class => 'btn'
+      % } else {
+        %= link_to 'Raw', url_for('show', paste_id => $paste_id, format => 'txt'), class => 'btn'
+        %= link_to 'Graph', url_for('chart'), class => 'btn' if $enable_charts
+      % }
+    % }
   % } else {
     <button class="btn save" tabindex="2">Save</button>
     %= file_field 'upload', id => 'file_upload', class => 'btn upload'

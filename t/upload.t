@@ -21,6 +21,24 @@ $t->get_ok($t->tx->res->headers->location)->status_is(200)
   ->element_exists(qq(a[href="/$id.txt"]))->element_exists(qq(a[href="/?edit=$id"]))
   ->element_exists('pre')->text_is('pre', $raw);
 
+$raw = "Not actually an image.";
+
+$t->post_ok( '/', form => { upload => [ {
+    content        => $raw,
+    filename       => 'foo.jpg',
+    'Content-Type' => 'image/jpeg'
+} ] })->status_is(302)->header_like( 'Location', qr[^/\w{12}$] );
+
+($id) = $t->tx->res->headers->location =~ m!/(\w+)$!;
+$t->get_ok($t->tx->res->headers->location)->status_is(200)
+  ->text_is('title', 'foo.jpg - Mojopaste')
+  ->element_exists(qq(a[href="/"]))
+  ->element_exists(qq(a[href="/$id?raw=1"]))
+  ->element_exists_not(qq(a[href="/$id.txt"]))
+  ->element_exists_not(qq(a[href="/?edit=$id"]))
+  ->element_exists('div.prettyprint')
+  ->text_is('div.prettyprint', 'Non textual paste, .');
+
 require File::Path;
 File::Path::remove_tree($ENV{PASTE_DIR}, {keep_root => 1});
 done_testing;
